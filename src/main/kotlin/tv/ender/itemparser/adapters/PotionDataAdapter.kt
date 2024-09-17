@@ -3,7 +3,7 @@ package tv.ender.itemparser.adapters
 import com.google.gson.*
 import org.bukkit.Color
 import org.bukkit.potion.PotionType
-import tv.ender.itemparser.modal.item.PotionData
+import tv.ender.itemparser.modal.data.PotionData
 import java.lang.reflect.Type
 
 class PotionDataAdapter : JsonSerializer<PotionData>, JsonDeserializer<PotionData> {

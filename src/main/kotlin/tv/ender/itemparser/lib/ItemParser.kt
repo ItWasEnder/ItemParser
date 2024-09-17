@@ -5,6 +5,11 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.stream.JsonReader
 import org.bukkit.inventory.ItemStack
+import tv.ender.itemparser.modal.data.EnchantData
+import tv.ender.itemparser.modal.data.FireworkEffectData
+import tv.ender.itemparser.modal.data.InstrumentData
+import tv.ender.itemparser.modal.data.PotionData
+import tv.ender.itemparser.modal.interfaces.Parser
 import tv.ender.itemparser.modal.item.*
 import java.io.File
 
@@ -42,6 +47,10 @@ object ItemParser : Parser {
 
     override fun toJSON(stack: ItemStack): String {
         return gson.toJson(stack.toFacade())
+    }
+
+    override fun toJSON(facade: ItemFacade): String {
+        return gson.toJson(facade)
     }
 
     // Convert JsonElement to ItemFacade

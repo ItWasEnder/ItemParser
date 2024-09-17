@@ -2,18 +2,36 @@ package tv.ender.itemparser.modal.item
 
 import org.bukkit.ChatColor
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.*
+import org.bukkit.inventory.meta.AxolotlBucketMeta
+import org.bukkit.inventory.meta.EnchantmentStorageMeta
+import org.bukkit.inventory.meta.FireworkEffectMeta
+import org.bukkit.inventory.meta.ItemMeta
+import org.bukkit.inventory.meta.MusicInstrumentMeta
+import org.bukkit.inventory.meta.PotionMeta
+import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataContainer
 import tv.ender.itemparser.adapters.ItemFacadeAdapter
+import tv.ender.itemparser.modal.data.AxolotlData
+import tv.ender.itemparser.modal.data.EnchantData
+import tv.ender.itemparser.modal.data.FireworkEffectData
+import tv.ender.itemparser.modal.data.InstrumentData
+import tv.ender.itemparser.modal.data.PotionData
+import tv.ender.itemparser.modal.data.toAxolotlData
+import tv.ender.itemparser.modal.data.toEnchantData
+import tv.ender.itemparser.modal.data.toFireworkEffectData
+import tv.ender.itemparser.modal.data.toInstrumentData
+import tv.ender.itemparser.modal.data.toPotionData
 import tv.ender.itemparser.modal.extensions.prettyName
+import tv.ender.itemparser.persistent.PersistentDataSerializer
 import tv.ender.itemparser.utils.MetaUtils
 import kotlin.math.max
 
 data class ItemFacade(
-    var displayName: String,
     var material: Material,
+    var displayName: String = material.prettyName,
     var lore: List<String> = emptyList(),
     var model: Int = 0,
     var count: Int = 1,
@@ -24,8 +42,23 @@ data class ItemFacade(
     var instrumentData: InstrumentData? = null,
     var axolotlData: AxolotlData? = null,
     var fireworkEffectData: FireworkEffectData? = null,
-    var pdcDelegate: PersistentDataContainer? = null
+    var pdcMapList: List<Map<*, *>>? = null,
 ) {
+    init {
+        println("on init has pdc? ${pdcMapList != null}")
+//        printStackTrace()
+    }
+
+
+    fun printStackTrace() {
+        try {
+            throw Exception("Print Stack Trace")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
     fun isSimilar(stack: ItemStack): Boolean {
         if (stack.type != material) return false
 
@@ -51,8 +84,18 @@ data class ItemFacade(
 
         if (fireworkEffectData?.isSimilar(stack) == false) return false
 
-        // TODO: Do this better
-//        if (publicBukkitData?.isSimilar(stack) == false) return false
+        if (pdcMapList?.isNotEmpty() == true) {
+            val currentPdc = meta.persistentDataContainer
+
+            for (map in pdcMapList!!) {
+                val key = NamespacedKey.fromString(map["key"].toString()) ?: continue
+                val type =
+                    PersistentDataSerializer.getNativePersistentDataTypeByFieldName(map["type"].toString())
+                val value = map["value"]
+
+                currentPdc[key, type]?.also { if (it == value) return false } ?: return false
+            }
+        }
 
         return true
     }
@@ -91,7 +134,22 @@ data class ItemFacade(
         stack.itemMeta = meta
 
         // Applying public Bukkit data
-//        publicBukkitData?.apply(stack)
+        println("building item | pdc? ${pdcMapList != null}")
+        pdcMapList?.apply {
+            println("applying pdc map list")
+            val currentPdc = meta.persistentDataContainer
+
+            for (map in pdcMapList!!) {
+                val key = NamespacedKey.fromString(map["key"].toString()) ?: continue
+                val type =
+                    PersistentDataSerializer.getNativePersistentDataTypeByFieldName(map["type"].toString())
+                map["value"]?.also { currentPdc[key, type] = it }
+            }
+
+            PersistentDataSerializer.fromMapList(this, meta.persistentDataContainer).also {
+                println("do i need to apply $it?")
+            }
+        }
 
         return stack
     }
@@ -100,10 +158,7 @@ data class ItemFacade(
         val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
 
         fun of(stack: ItemStack): ItemFacade {
-            val meta = stack.itemMeta ?: return ItemFacade(
-                displayName = "",
-                material = stack.type
-            )
+            val meta = stack.itemMeta ?: return ItemFacade(material = stack.type)
 
             val builder = builder()
                 .material(stack.type)
@@ -122,6 +177,12 @@ data class ItemFacade(
             if (meta is AxolotlBucketMeta) builder.axolotlData(meta.toAxolotlData())
             if (meta is FireworkEffectMeta) builder.fireworkEffectData(meta.toFireworkEffectData())
             if (meta is MusicInstrumentMeta) builder.instrumentData(meta.toInstrumentData())
+
+            val pdc = meta.persistentDataContainer
+
+            for (key in pdc.keys) {
+                println("key: $key")
+            }
 
             if (meta.persistentDataContainer.keys.isNotEmpty()) {
                 builder.publicBukkitData(meta.persistentDataContainer)
@@ -146,7 +207,7 @@ data class ItemFacade(
         private var instrumentData: InstrumentData? = null
         private var axolotlData: AxolotlData? = null
         private var fireworkEffectData: FireworkEffectData? = null
-        var pdcDelegate: PersistentDataContainer? = null
+        private var pdcMapList: List<Map<*, *>>? = null
 
         fun displayName(displayName: String) = apply { this.displayName = displayName }
         fun material(material: Material) = apply { this.material = material }
@@ -162,7 +223,8 @@ data class ItemFacade(
         fun fireworkEffectData(fireworkEffectData: FireworkEffectData?) =
             apply { this.fireworkEffectData = fireworkEffectData }
 
-        fun publicBukkitData(container: PersistentDataContainer?) = apply { this.pdcDelegate = container }
+        fun publicBukkitData(container: PersistentDataContainer) =
+            apply { this.pdcMapList = PersistentDataSerializer.toMapList(container) }
 
         fun build() = ItemFacade(
             displayName = displayName,
@@ -177,7 +239,7 @@ data class ItemFacade(
             instrumentData = instrumentData,
             axolotlData = axolotlData,
             fireworkEffectData = fireworkEffectData,
-            pdcDelegate = pdcDelegate
+            pdcMapList = pdcMapList
         )
     }
 }

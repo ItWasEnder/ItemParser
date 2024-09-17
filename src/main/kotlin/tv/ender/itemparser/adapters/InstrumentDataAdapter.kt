@@ -1,7 +1,7 @@
 package tv.ender.itemparser.adapters
 
 import com.google.gson.*
-import tv.ender.itemparser.modal.item.InstrumentData
+import tv.ender.itemparser.modal.data.InstrumentData
 import java.lang.reflect.Type
 
 class InstrumentDataAdapter : JsonSerializer<InstrumentData>, JsonDeserializer<InstrumentData> {

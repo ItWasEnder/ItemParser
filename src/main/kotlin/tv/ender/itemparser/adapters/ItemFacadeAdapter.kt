@@ -1,10 +1,21 @@
 package tv.ender.itemparser.adapters
 
-import com.google.gson.*
+import com.google.gson.JsonArray
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
-import tv.ender.itemparser.modal.item.*
-import tv.ender.itemparser.utils.PersistentDataSerializer
+import tv.ender.itemparser.modal.data.AxolotlData
+import tv.ender.itemparser.modal.data.EnchantData
+import tv.ender.itemparser.modal.data.FireworkEffectData
+import tv.ender.itemparser.modal.data.InstrumentData
+import tv.ender.itemparser.modal.data.PotionData
+import tv.ender.itemparser.modal.item.ItemFacade
+import tv.ender.itemparser.persistent.PersistentDataSerializer
 import java.lang.reflect.Type
 import kotlin.math.max
 
@@ -60,12 +71,16 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
                 builder.fireworkEffectData(fireworkEffectData)
             }
 
-            extraData["pdc"]?.asJsonArray?.let { pdcJson ->
-                val pdcSerializedString = pdcJson.toString()
+            extraData["pdc"]?.asJsonArray?.let { pdcArray ->
+                val pdcJson = pdcArray.toString()
                 val persistentDataContainer = PersistentDataSerializer.fromJson(
-                    pdcSerializedString,
+                    pdcJson,
                     ItemStack.empty().persistentDataContainer.adapterContext.newPersistentDataContainer()
                 )
+
+                println("json: $pdcJson")
+                println("Loading PDC to builder")
+
                 builder.publicBukkitData(persistentDataContainer)
             }
         }
@@ -125,7 +140,7 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
                 itemFacade.instrumentData?.let { add("instrumentData", context.serialize(it)) }
                 itemFacade.axolotlData?.let { add("axolotlData", context.serialize(it)) }
                 itemFacade.fireworkEffectData?.let { add("fireworkEffectData", context.serialize(it)) }
-                itemFacade.pdcDelegate?.let { add("pdc", context.serialize(PersistentDataSerializer.toMapList(it))) }
+                itemFacade.pdcMapList?.let { add("pdc", PersistentDataSerializer.toJson(it)) }
             }
 
             if (!extraData.isEmpty) add("extra-data", extraData)

@@ -1,9 +1,9 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import java.util.Properties
 
 plugins {
     kotlin("jvm") version "2.0.20-RC"
     id("io.github.goooler.shadow") version "8.1.7"
+    id("xyz.jpenilla.run-paper") version "2.3.0"
     id("maven-publish")
 }
 
@@ -17,7 +17,9 @@ if (localProperties.exists()) {
 group = "tv.ender.itemparser"
 version = "1.0.5"
 
-val GSON_VERSION = "2.8.9"
+val gsonVersion = "2.8.9"
+val mockkVersion = "1.13.12"
+val paperVersion = "1.21.1-R0.1-SNAPSHOT"
 
 repositories {
     mavenCentral()
@@ -30,11 +32,15 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
-    compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    testImplementation(kotlin("test"))
+    testImplementation("io.mockk:mockk:${mockkVersion}")
+    testImplementation("io.papermc.paper:paper-api:$paperVersion")
+
+    compileOnly("io.papermc.paper:paper-api:$paperVersion")
+    compileOnly(kotlin("stdlib-jdk8"))
 
     // add gson
-    compileOnly("com.google.code.gson:gson:$GSON_VERSION")
+    compileOnly("com.google.code.gson:gson:$gsonVersion")
 }
 
 val targetJavaVersion = 21
@@ -42,23 +48,34 @@ kotlin {
     jvmToolchain(targetJavaVersion)
 }
 
-tasks.build {
-    dependsOn("shadowJar")
-}
-
-tasks.processResources {
-    val props = mapOf("version" to version)
-    inputs.properties(props)
-    filteringCharset = "UTF-8"
-    filesMatching("plugin.yml") {
-        expand(props)
+tasks {
+    test {
+        useJUnitPlatform()
     }
-}
 
-tasks.withType<ShadowJar> {
-    // Ensure you name the jar appropriately
-    archiveClassifier.set("all")
-    minimize()
+    runServer {
+        minecraftVersion("1.21.1")
+    }
+
+    build {
+        dependsOn("shadowJar")
+    }
+
+    processResources {
+        val props = mapOf("version" to version)
+        inputs.properties(props)
+        filteringCharset = "UTF-8"
+        filesMatching("plugin.yml") {
+            expand(props)
+        }
+    }
+
+    shadowJar {
+        isEnableRelocation = true
+        relocationPrefix = "${project.group}.libraries"
+        archiveClassifier.set("all")
+        minimize()
+    }
 }
 
 publishing {

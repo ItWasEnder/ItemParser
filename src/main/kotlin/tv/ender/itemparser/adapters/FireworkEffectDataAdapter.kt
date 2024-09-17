@@ -3,7 +3,7 @@ package tv.ender.itemparser.adapters
 import com.google.gson.*
 import org.bukkit.Color.fromRGB
 import org.bukkit.FireworkEffect
-import tv.ender.itemparser.modal.item.FireworkEffectData
+import tv.ender.itemparser.modal.data.FireworkEffectData
 import java.lang.reflect.Type
 
 class FireworkEffectDataAdapter : JsonSerializer<FireworkEffectData>, JsonDeserializer<FireworkEffectData> {

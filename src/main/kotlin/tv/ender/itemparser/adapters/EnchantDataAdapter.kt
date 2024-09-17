@@ -1,11 +1,18 @@
 package tv.ender.itemparser.adapters
 
-import com.google.gson.*
+import com.google.gson.JsonArray
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonParseException
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
 import io.papermc.paper.registry.RegistryAccess
 import io.papermc.paper.registry.RegistryKey
 import org.bukkit.NamespacedKey
-import tv.ender.itemparser.modal.item.EnchantData
-import tv.ender.itemparser.modal.item.WrappedEnchantment
+import tv.ender.itemparser.modal.data.EnchantData
+import tv.ender.itemparser.modal.data.WrappedEnchantment
 import java.lang.reflect.Type
 
 class EnchantDataAdapter : JsonSerializer<EnchantData>, JsonDeserializer<EnchantData> {

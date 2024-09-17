@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "tv.ender.itemparser"
-version = "1.0.4"
+version = "1.0.5"
 
 val GSON_VERSION = "2.8.9"
 
@@ -22,7 +22,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     compileOnly("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     // add gson
@@ -67,11 +67,8 @@ publishing {
     }
     repositories {
         maven {
-            name = "ender-admin"
+            name = "ender-private"
             url = uri("https://repo.ender.tv/public")
-
-            credentials {
-            }
         }
     }
 }

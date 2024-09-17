@@ -60,11 +60,11 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
                 builder.fireworkEffectData(fireworkEffectData)
             }
 
-            extraData["pdc"]?.asJsonObject?.let { pdcJson ->
+            extraData["pdc"]?.asJsonArray?.let { pdcJson ->
                 val pdcSerializedString = pdcJson.toString()
                 val persistentDataContainer = PersistentDataSerializer.fromJson(
                     pdcSerializedString,
-                    context = ItemStack.empty().persistentDataContainer.adapterContext
+                    ItemStack.empty().persistentDataContainer.adapterContext.newPersistentDataContainer()
                 )
                 builder.publicBukkitData(persistentDataContainer)
             }

@@ -3,7 +3,7 @@ version: '1.0-SNAPSHOT'
 main: tv.ender.itemparser.Plugin
 api-version: '1.21'
 authors: [ ItWasEnder ]
-description: Parsing library to serialis ItemStacks to Json
+description: Parsing library to serialize ItemStacks to Json
 website: https://ender.tv
 libraries:
   - org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.20-RC

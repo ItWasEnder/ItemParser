@@ -1,9 +1,17 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import java.util.Properties
 
 plugins {
     kotlin("jvm") version "2.0.20-RC"
     id("io.github.goooler.shadow") version "8.1.7"
     id("maven-publish")
+}
+
+val localProperties = file("local.properties")
+if (localProperties.exists()) {
+    val properties = Properties().apply { load(localProperties.inputStream()) }
+    extra.set("repoUser", properties.getProperty("repoUser"))
+    extra.set("repoPassword", properties.getProperty("repoPassword"))
 }
 
 group = "tv.ender.itemparser"
@@ -69,6 +77,10 @@ publishing {
         maven {
             name = "ender-private"
             url = uri("https://repo.ender.tv/public")
+            credentials {
+                username = findProperty("repoUser") as String? ?: System.getenv("REPO_USER")
+                password = findProperty("repoPassword") as String? ?: System.getenv("REPO_PASSWORD")
+            }
         }
     }
 }

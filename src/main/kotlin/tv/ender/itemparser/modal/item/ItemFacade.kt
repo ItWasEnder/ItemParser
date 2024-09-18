@@ -108,13 +108,7 @@ data class ItemFacade(
             meta.lore = lore.map { ChatColor.translateAlternateColorCodes('&', it) }
         }
 
-        texture?.let {
-            MetaUtils.applyTexture(
-                meta,
-                texture!!,
-                ChatColor.stripColor(ChatColor.translateAlternateColorCodes('&', displayName))
-            )
-        }
+        texture?.also { MetaUtils.applyTexture(meta, it) }
 
         // Apply metadata
         enchantData?.apply(meta)

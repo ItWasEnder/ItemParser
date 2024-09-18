@@ -12,7 +12,7 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
-import java.util.*
+import java.util.UUID
 
 object MetaUtils {
     fun applyTexture(meta: ItemMeta?, url: String, name: String? = null) {
@@ -23,7 +23,8 @@ object MetaUtils {
             return
         }
 
-        val playerProfile: PlayerProfile = Bukkit.createProfile(UUID.randomUUID(), name)
+        val fixedName = name?.replace(" ", "")
+        val playerProfile: PlayerProfile = Bukkit.createProfile(UUID.randomUUID(), fixedName)
         playerProfile.setProperty(ProfileProperty("textures", url))
 
         meta.setPlayerProfile(playerProfile)
@@ -136,7 +137,7 @@ object MetaUtils {
         stack: ItemStack,
         key: NamespacedKey,
         value: Z,
-        type: PersistentDataType<T, Z>
+        type: PersistentDataType<T, Z>,
     ): ItemStack {
         val meta: ItemMeta = stack.getItemMeta()
         val container: PersistentDataContainer = meta.getPersistentDataContainer()

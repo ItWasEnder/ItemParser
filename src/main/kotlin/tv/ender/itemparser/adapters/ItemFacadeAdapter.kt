@@ -77,10 +77,6 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
                     pdcJson,
                     ItemStack.empty().persistentDataContainer.adapterContext.newPersistentDataContainer()
                 )
-
-                println("json: $pdcJson")
-                println("Loading PDC to builder")
-
                 builder.publicBukkitData(persistentDataContainer)
             }
         }

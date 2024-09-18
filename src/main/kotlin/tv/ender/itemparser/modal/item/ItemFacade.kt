@@ -13,6 +13,7 @@ import org.bukkit.inventory.meta.MusicInstrumentMeta
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataContainer
+import tv.ender.itemparser.Plugin
 import tv.ender.itemparser.adapters.ItemFacadeAdapter
 import tv.ender.itemparser.modal.data.AxolotlData
 import tv.ender.itemparser.modal.data.EnchantData
@@ -44,20 +45,6 @@ data class ItemFacade(
     var fireworkEffectData: FireworkEffectData? = null,
     var pdcMapList: List<Map<*, *>>? = null,
 ) {
-    init {
-        println("on init has pdc? ${pdcMapList != null}")
-//        printStackTrace()
-    }
-
-
-    fun printStackTrace() {
-        try {
-            throw Exception("Print Stack Trace")
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
 
     fun isSimilar(stack: ItemStack): Boolean {
         if (stack.type != material) return false
@@ -93,7 +80,17 @@ data class ItemFacade(
                     PersistentDataSerializer.getNativePersistentDataTypeByFieldName(map["type"].toString())
                 val value = map["value"]
 
-                currentPdc[key, type]?.also { if (it == value) return false } ?: return false
+                if (Plugin.DEBUG) {
+                    println("Checking PDC | $key, $type, $value")
+                }
+
+                currentPdc[key, type]?.also {
+                    if (Plugin.DEBUG) {
+                        println("value exists: $it")
+                        println("compare: ${it == value}")
+                    }
+                    if (it != value) return false
+                } ?: return false
             }
         }
 
@@ -131,25 +128,13 @@ data class ItemFacade(
         }
 
         MetaUtils.fixName(meta)
-        stack.itemMeta = meta
 
         // Applying public Bukkit data
-        println("building item | pdc? ${pdcMapList != null}")
         pdcMapList?.apply {
-            println("applying pdc map list")
-            val currentPdc = meta.persistentDataContainer
-
-            for (map in pdcMapList!!) {
-                val key = NamespacedKey.fromString(map["key"].toString()) ?: continue
-                val type =
-                    PersistentDataSerializer.getNativePersistentDataTypeByFieldName(map["type"].toString())
-                map["value"]?.also { currentPdc[key, type] = it }
-            }
-
-            PersistentDataSerializer.fromMapList(this, meta.persistentDataContainer).also {
-                println("do i need to apply $it?")
-            }
+            PersistentDataSerializer.fromMapList(this, meta.persistentDataContainer)
         }
+
+        stack.itemMeta = meta
 
         return stack
     }
@@ -171,19 +156,11 @@ data class ItemFacade(
             if (meta.hasLore()) builder.lore(meta.lore ?: emptyList())
             if (meta is SkullMeta) meta.playerProfile?.properties?.firstOrNull { it.name == "textures" }
                 ?.let { builder.texture(it.value) }
-
             if (meta is PotionMeta) builder.potionData(meta.toPotionData())
             if (meta is EnchantmentStorageMeta || meta.hasEnchants()) builder.enchantData(meta.toEnchantData())
             if (meta is AxolotlBucketMeta) builder.axolotlData(meta.toAxolotlData())
             if (meta is FireworkEffectMeta) builder.fireworkEffectData(meta.toFireworkEffectData())
             if (meta is MusicInstrumentMeta) builder.instrumentData(meta.toInstrumentData())
-
-            val pdc = meta.persistentDataContainer
-
-            for (key in pdc.keys) {
-                println("key: $key")
-            }
-
             if (meta.persistentDataContainer.keys.isNotEmpty()) {
                 builder.publicBukkitData(meta.persistentDataContainer)
             }

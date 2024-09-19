@@ -1,5 +1,6 @@
 package tv.ender.itemparser.modal.item
 
+import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.ChatColor
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -27,12 +28,14 @@ import tv.ender.itemparser.modal.data.toInstrumentData
 import tv.ender.itemparser.modal.data.toPotionData
 import tv.ender.itemparser.modal.extensions.prettyName
 import tv.ender.itemparser.persistent.PersistentDataSerializer
+import tv.ender.itemparser.text.ColorUtil
+import tv.ender.itemparser.text.ColorUtil.LEGACY
 import tv.ender.itemparser.utils.MetaUtils
 import kotlin.math.max
 
 data class ItemFacade(
     var material: Material,
-    var displayName: String = material.prettyName,
+    var displayName: String,
     var lore: List<String> = emptyList(),
     var model: Int = 0,
     var count: Int = 1,
@@ -102,7 +105,7 @@ data class ItemFacade(
         val meta = stack.itemMeta ?: return stack
 
         if (model != 0) meta.setCustomModelData(model)
-        meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', displayName))
+        meta.displayName(LEGACY.deserialize(ColorUtil.hex(displayName)).decoration(TextDecoration.ITALIC, false))
 
         if (lore.isNotEmpty()) {
             meta.lore = lore.map { ChatColor.translateAlternateColorCodes('&', it) }
@@ -137,13 +140,14 @@ data class ItemFacade(
         val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
 
         fun of(stack: ItemStack): ItemFacade {
-            val meta = stack.itemMeta ?: return ItemFacade(material = stack.type)
+            val meta = stack.itemMeta ?: return ItemFacade(material = stack.type, displayName = stack.type.prettyName)
+            val metaDisplayName = meta.displayName()?.let { LEGACY.serialize(it) } ?: ""
 
             val builder = builder()
                 .material(stack.type)
                 .count(stack.amount)
                 .displayName(
-                    if (meta.displayName.isBlank()) stack.type.prettyName else meta.displayName
+                    metaDisplayName.ifBlank { stack.type.prettyName }
                 )
 
             if (meta.hasCustomModelData()) builder.model(meta.customModelData)

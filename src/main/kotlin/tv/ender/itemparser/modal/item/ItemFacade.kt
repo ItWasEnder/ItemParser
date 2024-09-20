@@ -62,6 +62,7 @@ data class ItemFacade(
             return texture.equals(MetaUtils.getTexture(meta), ignoreCase = true)
         }
 
+        // TODO: Check if meta is present on item and if so compare to faced
         if (!meta.hasCustomModelData() && model != 0) return false
 
         if (meta.hasCustomModelData() && model != meta.customModelData) return false
@@ -124,6 +125,7 @@ data class ItemFacade(
         potionData?.takeIf { meta is PotionMeta }?.apply(meta as PotionMeta)
         axolotlData?.takeIf { meta is AxolotlBucketMeta }?.apply(meta as AxolotlBucketMeta)
         fireworkEffectData?.takeIf { meta is FireworkEffectMeta }?.apply(meta as FireworkEffectMeta)
+        armorTrimData?.takeIf { meta is ArmorMeta }?.apply(meta as ArmorMeta)
         instrumentData?.takeIf { meta is MusicInstrumentMeta }?.apply(meta as MusicInstrumentMeta)
 
         if (hideEnchants) {
@@ -165,7 +167,7 @@ data class ItemFacade(
             if (meta is AxolotlBucketMeta) builder.axolotlData(meta.toAxolotlData())
             if (meta is FireworkEffectMeta) builder.fireworkEffectData(meta.toFireworkEffectData())
             if (meta is MusicInstrumentMeta) builder.instrumentData(meta.toInstrumentData())
-            if (meta is ArmorMeta) builder.armorTrimData(meta.toArmorTrimData())
+            if (meta is ArmorMeta && meta.hasTrim()) builder.armorTrimData(meta.toArmorTrimData())
             if (meta.persistentDataContainer.keys.isNotEmpty()) {
                 builder.publicBukkitData(meta.persistentDataContainer)
             }

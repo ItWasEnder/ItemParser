@@ -9,6 +9,7 @@ import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
+import tv.ender.itemparser.modal.data.ArmorTrimData
 import tv.ender.itemparser.modal.data.AxolotlData
 import tv.ender.itemparser.modal.data.EnchantData
 import tv.ender.itemparser.modal.data.FireworkEffectData
@@ -69,6 +70,11 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
             extraData["fireworkEffectData"]?.let {
                 val fireworkEffectData = context.deserialize<FireworkEffectData>(it, FireworkEffectData::class.java)
                 builder.fireworkEffectData(fireworkEffectData)
+            }
+
+            extraData["armorTrimData"]?.let {
+                val armorTrimData = context.deserialize<ArmorTrimData>(it, ArmorTrimData::class.java)
+                builder.armorTrimData(armorTrimData)
             }
 
             extraData["pdc"]?.asJsonArray?.let { pdcArray ->
@@ -136,6 +142,7 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
                 itemFacade.instrumentData?.let { add("instrumentData", context.serialize(it)) }
                 itemFacade.axolotlData?.let { add("axolotlData", context.serialize(it)) }
                 itemFacade.fireworkEffectData?.let { add("fireworkEffectData", context.serialize(it)) }
+                itemFacade.armorTrimData?.let { add("armorTrimData", context.serialize(it)) }
                 itemFacade.pdcMapList?.let { add("pdc", PersistentDataSerializer.toJson(it)) }
             }
 

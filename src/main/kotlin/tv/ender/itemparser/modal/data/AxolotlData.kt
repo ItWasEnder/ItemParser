@@ -9,7 +9,7 @@ import tv.ender.itemparser.modal.interfaces.ItemData
 
 data class AxolotlData(var variant: Int = 0) : ItemData<AxolotlBucketMeta> {
     override fun isSimilar(stack: ItemStack): Boolean {
-        val meta: ItemMeta = stack.getItemMeta() ?: return false
+        val meta: ItemMeta = stack.itemMeta ?: return false
 
         if (stack.type != Material.AXOLOTL_BUCKET) {
             return false

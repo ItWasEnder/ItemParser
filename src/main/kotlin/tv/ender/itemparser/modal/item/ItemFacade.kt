@@ -6,6 +6,7 @@ import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.ArmorMeta
 import org.bukkit.inventory.meta.AxolotlBucketMeta
 import org.bukkit.inventory.meta.EnchantmentStorageMeta
 import org.bukkit.inventory.meta.FireworkEffectMeta
@@ -16,11 +17,13 @@ import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataContainer
 import tv.ender.itemparser.Plugin
 import tv.ender.itemparser.adapters.ItemFacadeAdapter
+import tv.ender.itemparser.modal.data.ArmorTrimData
 import tv.ender.itemparser.modal.data.AxolotlData
 import tv.ender.itemparser.modal.data.EnchantData
 import tv.ender.itemparser.modal.data.FireworkEffectData
 import tv.ender.itemparser.modal.data.InstrumentData
 import tv.ender.itemparser.modal.data.PotionData
+import tv.ender.itemparser.modal.data.toArmorTrimData
 import tv.ender.itemparser.modal.data.toAxolotlData
 import tv.ender.itemparser.modal.data.toEnchantData
 import tv.ender.itemparser.modal.data.toFireworkEffectData
@@ -46,6 +49,7 @@ data class ItemFacade(
     var instrumentData: InstrumentData? = null,
     var axolotlData: AxolotlData? = null,
     var fireworkEffectData: FireworkEffectData? = null,
+    var armorTrimData: ArmorTrimData? = null,
     var pdcMapList: List<Map<*, *>>? = null,
 ) {
 
@@ -73,6 +77,8 @@ data class ItemFacade(
         if (axolotlData?.isSimilar(stack) == false) return false
 
         if (fireworkEffectData?.isSimilar(stack) == false) return false
+
+        if (armorTrimData?.isSimilar(stack) == false) return false
 
         if (pdcMapList?.isNotEmpty() == true) {
             val currentPdc = meta.persistentDataContainer
@@ -159,6 +165,7 @@ data class ItemFacade(
             if (meta is AxolotlBucketMeta) builder.axolotlData(meta.toAxolotlData())
             if (meta is FireworkEffectMeta) builder.fireworkEffectData(meta.toFireworkEffectData())
             if (meta is MusicInstrumentMeta) builder.instrumentData(meta.toInstrumentData())
+            if (meta is ArmorMeta) builder.armorTrimData(meta.toArmorTrimData())
             if (meta.persistentDataContainer.keys.isNotEmpty()) {
                 builder.publicBukkitData(meta.persistentDataContainer)
             }
@@ -182,6 +189,7 @@ data class ItemFacade(
         private var instrumentData: InstrumentData? = null
         private var axolotlData: AxolotlData? = null
         private var fireworkEffectData: FireworkEffectData? = null
+        private var armorTrimData: ArmorTrimData? = null
         private var pdcMapList: List<Map<*, *>>? = null
 
         fun displayName(displayName: String) = apply { this.displayName = displayName }
@@ -195,6 +203,7 @@ data class ItemFacade(
         fun enchantData(enchantData: EnchantData?) = apply { this.enchantData = enchantData }
         fun instrumentData(instrumentData: InstrumentData?) = apply { this.instrumentData = instrumentData }
         fun axolotlData(axolotlData: AxolotlData?) = apply { this.axolotlData = axolotlData }
+        fun armorTrimData(armorTrimData: ArmorTrimData?) = apply { this.armorTrimData = armorTrimData }
         fun fireworkEffectData(fireworkEffectData: FireworkEffectData?) =
             apply { this.fireworkEffectData = fireworkEffectData }
 
@@ -214,6 +223,7 @@ data class ItemFacade(
             instrumentData = instrumentData,
             axolotlData = axolotlData,
             fireworkEffectData = fireworkEffectData,
+            armorTrimData = armorTrimData,
             pdcMapList = pdcMapList
         )
     }

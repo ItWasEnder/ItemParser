@@ -35,10 +35,6 @@ data class ArmorTrimData(
     companion object {
         val TRIM_PATTERNS = RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_PATTERN)
         val TRIM_MATERIALS = RegistryAccess.registryAccess().getRegistry(RegistryKey.TRIM_MATERIAL)
-
-        inline fun build(block: AxolotlData.() -> Unit): AxolotlData {
-            return AxolotlData().apply(block)
-        }
     }
 }
 

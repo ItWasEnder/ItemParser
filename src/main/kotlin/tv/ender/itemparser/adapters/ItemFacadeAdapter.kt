@@ -14,6 +14,7 @@ import tv.ender.itemparser.modal.data.AxolotlData
 import tv.ender.itemparser.modal.data.EnchantData
 import tv.ender.itemparser.modal.data.FireworkEffectData
 import tv.ender.itemparser.modal.data.InstrumentData
+import tv.ender.itemparser.modal.data.OminousData
 import tv.ender.itemparser.modal.data.PotionData
 import tv.ender.itemparser.modal.item.ItemFacade
 import tv.ender.itemparser.persistent.PersistentDataSerializer
@@ -75,6 +76,11 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
             extraData["armorTrimData"]?.let {
                 val armorTrimData = context.deserialize<ArmorTrimData>(it, ArmorTrimData::class.java)
                 builder.armorTrimData(armorTrimData)
+            }
+
+            extraData["ominousData"]?.let {
+                val data = context.deserialize<OminousData>(it, OminousData::class.java)
+                builder.ominousData(data)
             }
 
             extraData["pdc"]?.asJsonArray?.let { pdcArray ->
@@ -143,6 +149,7 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
                 itemFacade.axolotlData?.let { add("axolotlData", context.serialize(it)) }
                 itemFacade.fireworkEffectData?.let { add("fireworkEffectData", context.serialize(it)) }
                 itemFacade.armorTrimData?.let { add("armorTrimData", context.serialize(it)) }
+                itemFacade.ominousData?.let { add("ominousData", context.serialize(it)) }
                 itemFacade.pdcMapList?.let { add("pdc", PersistentDataSerializer.toJson(it)) }
             }
 

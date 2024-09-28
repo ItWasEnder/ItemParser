@@ -12,6 +12,7 @@ import org.bukkit.inventory.meta.EnchantmentStorageMeta
 import org.bukkit.inventory.meta.FireworkEffectMeta
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.inventory.meta.MusicInstrumentMeta
+import org.bukkit.inventory.meta.OminousBottleMeta
 import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataContainer
@@ -22,12 +23,14 @@ import tv.ender.itemparser.modal.data.AxolotlData
 import tv.ender.itemparser.modal.data.EnchantData
 import tv.ender.itemparser.modal.data.FireworkEffectData
 import tv.ender.itemparser.modal.data.InstrumentData
+import tv.ender.itemparser.modal.data.OminousData
 import tv.ender.itemparser.modal.data.PotionData
 import tv.ender.itemparser.modal.data.toArmorTrimData
 import tv.ender.itemparser.modal.data.toAxolotlData
 import tv.ender.itemparser.modal.data.toEnchantData
 import tv.ender.itemparser.modal.data.toFireworkEffectData
 import tv.ender.itemparser.modal.data.toInstrumentData
+import tv.ender.itemparser.modal.data.toOminousData
 import tv.ender.itemparser.modal.data.toPotionData
 import tv.ender.itemparser.modal.extensions.prettyName
 import tv.ender.itemparser.persistent.PersistentDataSerializer
@@ -51,6 +54,7 @@ data class ItemFacade(
     var fireworkEffectData: FireworkEffectData? = null,
     var armorTrimData: ArmorTrimData? = null,
     var pdcMapList: List<Map<*, *>>? = null,
+    var ominousData: OminousData? = null,
 ) {
 
     fun isSimilar(stack: ItemStack): Boolean {
@@ -62,24 +66,33 @@ data class ItemFacade(
             return texture.equals(MetaUtils.getTexture(meta), ignoreCase = true)
         }
 
-        // TODO: Check if meta is present on item and if so compare to faced
-        if (!meta.hasCustomModelData() && model != 0) return false
+        // Check if meta is present on item and if so compare to faced
+        if (meta.hasCustomModelData() && model != 0) {
+            if (model != meta.customModelData) return false
+        } else if (!meta.hasCustomModelData() && model != 0) {
+            return false
+        }
 
-        if (meta.hasCustomModelData() && model != meta.customModelData) return false
-
+        if (potionData == null && meta is PotionMeta) return false
         if (potionData?.isSimilar(stack) == false) return false
 
         if (meta.hasEnchants() && enchantData == null) return false
-
         if (enchantData?.isSimilar(stack) == false) return false
 
+        if (instrumentData == null && meta is MusicInstrumentMeta) return false
         if (instrumentData?.isSimilar(stack) == false) return false
 
+        if (axolotlData == null && meta is AxolotlBucketMeta) return false
         if (axolotlData?.isSimilar(stack) == false) return false
 
+        if (fireworkEffectData == null && meta is FireworkEffectMeta) return false
         if (fireworkEffectData?.isSimilar(stack) == false) return false
 
+        if (armorTrimData == null && meta is ArmorMeta && meta.hasTrim()) return false
         if (armorTrimData?.isSimilar(stack) == false) return false
+
+        if (ominousData == null && meta is OminousBottleMeta) return false
+        if (ominousData?.isSimilar(stack) == false) return false
 
         if (pdcMapList?.isNotEmpty() == true) {
             val currentPdc = meta.persistentDataContainer
@@ -148,7 +161,10 @@ data class ItemFacade(
         val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
 
         fun of(stack: ItemStack): ItemFacade {
-            val meta = stack.itemMeta ?: return ItemFacade(material = stack.type, displayName = stack.type.prettyName)
+            val meta = stack.itemMeta ?: return ItemFacade(
+                material = stack.type,
+                displayName = stack.type.prettyName,
+            )
             val metaDisplayName = meta.displayName()?.let { LEGACY.serialize(it) } ?: ""
 
             val builder = builder()
@@ -168,6 +184,7 @@ data class ItemFacade(
             if (meta is FireworkEffectMeta) builder.fireworkEffectData(meta.toFireworkEffectData())
             if (meta is MusicInstrumentMeta) builder.instrumentData(meta.toInstrumentData())
             if (meta is ArmorMeta && meta.hasTrim()) builder.armorTrimData(meta.toArmorTrimData())
+            if (meta is OminousBottleMeta) builder.ominousData(meta.toOminousData())
             if (meta.persistentDataContainer.keys.isNotEmpty()) {
                 builder.publicBukkitData(meta.persistentDataContainer)
             }
@@ -193,6 +210,7 @@ data class ItemFacade(
         private var fireworkEffectData: FireworkEffectData? = null
         private var armorTrimData: ArmorTrimData? = null
         private var pdcMapList: List<Map<*, *>>? = null
+        private var ominousData: OminousData? = null
 
         fun displayName(displayName: String) = apply { this.displayName = displayName }
         fun material(material: Material) = apply { this.material = material }
@@ -206,6 +224,7 @@ data class ItemFacade(
         fun instrumentData(instrumentData: InstrumentData?) = apply { this.instrumentData = instrumentData }
         fun axolotlData(axolotlData: AxolotlData?) = apply { this.axolotlData = axolotlData }
         fun armorTrimData(armorTrimData: ArmorTrimData?) = apply { this.armorTrimData = armorTrimData }
+        fun ominousData(data: OminousData?) = apply { this.ominousData = data }
         fun fireworkEffectData(fireworkEffectData: FireworkEffectData?) =
             apply { this.fireworkEffectData = fireworkEffectData }
 
@@ -226,7 +245,8 @@ data class ItemFacade(
             axolotlData = axolotlData,
             fireworkEffectData = fireworkEffectData,
             armorTrimData = armorTrimData,
-            pdcMapList = pdcMapList
+            pdcMapList = pdcMapList,
+            ominousData = ominousData,
         )
     }
 }

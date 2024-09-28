@@ -10,7 +10,8 @@ import tv.ender.itemparser.modal.data.FireworkEffectData
 import tv.ender.itemparser.modal.data.InstrumentData
 import tv.ender.itemparser.modal.data.PotionData
 import tv.ender.itemparser.modal.interfaces.Parser
-import tv.ender.itemparser.modal.item.*
+import tv.ender.itemparser.modal.item.ItemFacade
+import tv.ender.itemparser.modal.item.toFacade
 import java.io.File
 
 object ItemParser : Parser {
@@ -22,13 +23,17 @@ object ItemParser : Parser {
             .enableComplexMapKeySerialization()
             .disableHtmlEscaping()
 
-        builder.registerTypeAdapter(EnchantData::class.java, EnchantData.ADAPTER)
-        builder.registerTypeAdapter(FireworkEffectData::class.java, FireworkEffectData.ADAPTER)
-        builder.registerTypeAdapter(InstrumentData::class.java, InstrumentData.ADAPTER)
-        builder.registerTypeAdapter(PotionData::class.java, PotionData.ADAPTER)
-        builder.registerTypeAdapter(ItemFacade::class.java, ItemFacade.ADAPTER)
+        registerTypes(builder)
 
         gson = builder.create()
+    }
+
+    fun registerTypes(gsonBuilder: GsonBuilder) {
+        gsonBuilder.registerTypeAdapter(EnchantData::class.java, EnchantData.ADAPTER)
+        gsonBuilder.registerTypeAdapter(FireworkEffectData::class.java, FireworkEffectData.ADAPTER)
+        gsonBuilder.registerTypeAdapter(InstrumentData::class.java, InstrumentData.ADAPTER)
+        gsonBuilder.registerTypeAdapter(PotionData::class.java, PotionData.ADAPTER)
+        gsonBuilder.registerTypeAdapter(ItemFacade::class.java, ItemFacade.ADAPTER)
     }
 
     override fun fromJSON(json: String): ItemStack {

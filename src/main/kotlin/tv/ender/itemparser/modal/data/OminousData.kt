@@ -4,18 +4,18 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.inventory.meta.OminousBottleMeta
 import tv.ender.itemparser.modal.interfaces.ItemData
-import tv.ender.itemparser.text.ColorUtil
 
 data class OminousData(
-    var amplifier: Int = 1,
+    var amplifier: Int = 0,
 ) : ItemData<OminousBottleMeta> {
 
     override fun isSimilar(stack: ItemStack): Boolean {
         val meta: ItemMeta = stack.itemMeta ?: return false
 
         if (meta !is OminousBottleMeta) return false
+        val metaAmp = if (meta.hasAmplifier()) meta.amplifier else 0
 
-        return this.amplifier == meta.amplifier
+        return this.amplifier == metaAmp
     }
 
     override fun apply(meta: OminousBottleMeta) {
@@ -25,6 +25,6 @@ data class OminousData(
 
 fun OminousBottleMeta.toOminousData(): OminousData {
     return OminousData(
-        amplifier = this.amplifier,
+        amplifier = if (this.hasAmplifier()) this.amplifier else 0,
     )
 }

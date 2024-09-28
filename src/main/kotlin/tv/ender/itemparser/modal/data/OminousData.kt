@@ -4,6 +4,7 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.inventory.meta.OminousBottleMeta
 import tv.ender.itemparser.modal.interfaces.ItemData
+import tv.ender.itemparser.text.ColorUtil
 
 data class OminousData(
     var amplifier: Int = 1,

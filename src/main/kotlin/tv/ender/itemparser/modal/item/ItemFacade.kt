@@ -140,6 +140,7 @@ data class ItemFacade(
         fireworkEffectData?.takeIf { meta is FireworkEffectMeta }?.apply(meta as FireworkEffectMeta)
         armorTrimData?.takeIf { meta is ArmorMeta }?.apply(meta as ArmorMeta)
         instrumentData?.takeIf { meta is MusicInstrumentMeta }?.apply(meta as MusicInstrumentMeta)
+        ominousData?.takeIf { meta is OminousBottleMeta }?.apply(meta as OminousBottleMeta)
 
         if (hideEnchants) {
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS)

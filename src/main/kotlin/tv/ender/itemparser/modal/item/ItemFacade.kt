@@ -6,33 +6,10 @@ import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.ArmorMeta
-import org.bukkit.inventory.meta.AxolotlBucketMeta
-import org.bukkit.inventory.meta.EnchantmentStorageMeta
-import org.bukkit.inventory.meta.FireworkEffectMeta
-import org.bukkit.inventory.meta.ItemMeta
-import org.bukkit.inventory.meta.MusicInstrumentMeta
-import org.bukkit.inventory.meta.OminousBottleMeta
-import org.bukkit.inventory.meta.PotionMeta
-import org.bukkit.inventory.meta.SkullMeta
+import org.bukkit.inventory.meta.*
 import org.bukkit.persistence.PersistentDataContainer
-import tv.ender.itemparser.Plugin
 import tv.ender.itemparser.adapters.ItemFacadeAdapter
-import tv.ender.itemparser.modal.data.ArmorTrimData
-import tv.ender.itemparser.modal.data.AxolotlData
-import tv.ender.itemparser.modal.data.EnchantData
-import tv.ender.itemparser.modal.data.FireworkEffectData
-import tv.ender.itemparser.modal.data.InstrumentData
-import tv.ender.itemparser.modal.data.OminousData
-import tv.ender.itemparser.modal.data.PotionData
-import tv.ender.itemparser.modal.data.toArmorTrimData
-import tv.ender.itemparser.modal.data.toAxolotlData
-import tv.ender.itemparser.modal.data.toEnchantData
-import tv.ender.itemparser.modal.data.toFireworkEffectData
-import tv.ender.itemparser.modal.data.toInstrumentData
-import tv.ender.itemparser.modal.data.toOminousData
-import tv.ender.itemparser.modal.data.toPotionData
-import tv.ender.itemparser.modal.extensions.prettyName
+import tv.ender.itemparser.modal.data.*
 import tv.ender.itemparser.persistent.PersistentDataSerializer
 import tv.ender.itemparser.text.ColorUtil
 import tv.ender.itemparser.text.ColorUtil.LEGACY
@@ -41,7 +18,7 @@ import kotlin.math.max
 
 data class ItemFacade(
     var material: Material,
-    var displayName: String,
+    var displayName: String? = null,
     var lore: List<String> = emptyList(),
     var model: Int = 0,
     var count: Int = 1,
@@ -73,47 +50,29 @@ data class ItemFacade(
             return false
         }
 
-        if (potionData == null && meta is PotionMeta) return false
         if (potionData?.isSimilar(stack) == false) return false
 
-        if (meta.hasEnchants() && enchantData == null) return false
         if (enchantData?.isSimilar(stack) == false) return false
 
-        if (instrumentData == null && meta is MusicInstrumentMeta) return false
         if (instrumentData?.isSimilar(stack) == false) return false
 
-        if (axolotlData == null && meta is AxolotlBucketMeta) return false
         if (axolotlData?.isSimilar(stack) == false) return false
 
-        if (fireworkEffectData == null && meta is FireworkEffectMeta) return false
         if (fireworkEffectData?.isSimilar(stack) == false) return false
 
-        if (armorTrimData == null && meta is ArmorMeta && meta.hasTrim()) return false
         if (armorTrimData?.isSimilar(stack) == false) return false
 
-        if (ominousData == null && meta is OminousBottleMeta) return false
         if (ominousData?.isSimilar(stack) == false) return false
 
         if (pdcMapList?.isNotEmpty() == true) {
-            val currentPdc = meta.persistentDataContainer
-
             for (map in pdcMapList!!) {
                 val key = NamespacedKey.fromString(map["key"].toString()) ?: continue
-                val type =
-                    PersistentDataSerializer.getNativePersistentDataTypeByFieldName(map["type"].toString())
+                val type = PersistentDataSerializer.getNativePersistentDataTypeByFieldName(map["type"].toString())
                 val value = map["value"]
 
-                if (Plugin.DEBUG) {
-                    println("Checking PDC | $key, $type, $value")
+                if (!meta.persistentDataContainer.has(key, type) || meta.persistentDataContainer[key, type] != value) {
+                    return false
                 }
-
-                currentPdc[key, type]?.also {
-                    if (Plugin.DEBUG) {
-                        println("value exists: $it")
-                        println("compare: ${it == value}")
-                    }
-                    if (it != value) return false
-                } ?: return false
             }
         }
 
@@ -125,7 +84,11 @@ data class ItemFacade(
         val meta = stack.itemMeta ?: return stack
 
         if (model != 0) meta.setCustomModelData(model)
-        meta.displayName(LEGACY.deserialize(ColorUtil.hex(displayName)).decoration(TextDecoration.ITALIC, false))
+
+        if (displayName != null) {
+            val colored = ColorUtil.hex(displayName ?: "%%ERR%%")
+            meta.displayName(LEGACY.deserialize(colored).decoration(TextDecoration.ITALIC, false))
+        }
 
         if (lore.isNotEmpty()) {
             meta.lore = lore.map { ChatColor.translateAlternateColorCodes('&', it) }
@@ -162,19 +125,14 @@ data class ItemFacade(
         val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
 
         fun of(stack: ItemStack): ItemFacade {
-            val meta = stack.itemMeta ?: return ItemFacade(
-                material = stack.type,
-                displayName = stack.type.prettyName,
-            )
+            val meta = stack.itemMeta ?: return ItemFacade(stack.type)
             val metaDisplayName = meta.displayName()?.let { LEGACY.serialize(it) } ?: ""
 
             val builder = builder()
                 .material(stack.type)
                 .count(stack.amount)
-                .displayName(
-                    metaDisplayName.ifBlank { stack.type.prettyName }
-                )
 
+            if (meta.hasDisplayName()) builder.displayName(metaDisplayName)
             if (meta.hasCustomModelData()) builder.model(meta.customModelData)
             if (meta.hasLore()) builder.lore(meta.lore ?: emptyList())
             if (meta is SkullMeta) meta.playerProfile?.properties?.firstOrNull { it.name == "textures" }
@@ -197,7 +155,7 @@ data class ItemFacade(
     }
 
     class ItemFacadeBuilder {
-        private var displayName: String = ""
+        private var displayName: String? = null
         private var material: Material = Material.AIR
         private var lore: List<String> = emptyList()
         private var model: Int = 0
@@ -213,7 +171,7 @@ data class ItemFacade(
         private var pdcMapList: List<Map<*, *>>? = null
         private var ominousData: OminousData? = null
 
-        fun displayName(displayName: String) = apply { this.displayName = displayName }
+        fun displayName(displayName: String?) = apply { this.displayName = displayName }
         fun material(material: Material) = apply { this.material = material }
         fun lore(lore: List<String>) = apply { this.lore = lore }
         fun model(model: Int) = apply { this.model = model }

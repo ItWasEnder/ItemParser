@@ -1,21 +1,9 @@
 package tv.ender.itemparser.adapters
 
-import com.google.gson.JsonArray
-import com.google.gson.JsonDeserializationContext
-import com.google.gson.JsonDeserializer
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
+import com.google.gson.*
 import org.bukkit.Material
 import org.bukkit.inventory.ItemStack
-import tv.ender.itemparser.modal.data.ArmorTrimData
-import tv.ender.itemparser.modal.data.AxolotlData
-import tv.ender.itemparser.modal.data.EnchantData
-import tv.ender.itemparser.modal.data.FireworkEffectData
-import tv.ender.itemparser.modal.data.InstrumentData
-import tv.ender.itemparser.modal.data.OminousData
-import tv.ender.itemparser.modal.data.PotionData
+import tv.ender.itemparser.modal.data.*
 import tv.ender.itemparser.modal.item.ItemFacade
 import tv.ender.itemparser.persistent.PersistentDataSerializer
 import java.lang.reflect.Type
@@ -128,7 +116,7 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
 
     override fun serialize(itemFacade: ItemFacade, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
         val jsonObject = JsonObject().apply {
-            addProperty("displayName", itemFacade.displayName.replace("§", "&"))
+            addProperty("displayName", itemFacade.displayName?.replace("§", "&"))
             addProperty("material", itemFacade.material.name)
             addProperty("model", itemFacade.model)
             addProperty("count", itemFacade.count)

@@ -1,3 +1,4 @@
+import org.gradle.internal.impldep.org.eclipse.jgit.lib.ObjectChecker.encoding
 import java.util.Properties
 
 plugins {
@@ -15,7 +16,7 @@ if (localProperties.exists()) {
 }
 
 group = "tv.ender.itemparser"
-version = "1.0.13"
+version = "1.0.14"
 
 val gsonVersion = "2.8.9"
 val mockkVersion = "1.13.12"
@@ -75,6 +76,10 @@ tasks {
         relocationPrefix = "${project.group}.libraries"
         archiveClassifier.set("all")
         minimize()
+    }
+
+    compileJava {
+        options.encoding = "UTF-8"
     }
 }
 

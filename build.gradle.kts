@@ -1,4 +1,3 @@
-import org.gradle.internal.impldep.org.eclipse.jgit.lib.ObjectChecker.encoding
 import java.util.Properties
 
 plugins {

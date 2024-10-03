@@ -43,12 +43,8 @@ data class ItemFacade(
             return texture.equals(MetaUtils.getTexture(meta), ignoreCase = true)
         }
 
-        // Check if meta is present on item and if so compare to faced
-        if (meta.hasCustomModelData() && model != 0) {
-            if (model != meta.customModelData) return false
-        } else if (!meta.hasCustomModelData() && model != 0) {
-            return false
-        }
+        if (!meta.hasCustomModelData() && model != 0) return false
+        if (meta.hasCustomModelData() && model != meta.customModelData) return false
 
         if (potionData?.isSimilar(stack) == false) return false
 

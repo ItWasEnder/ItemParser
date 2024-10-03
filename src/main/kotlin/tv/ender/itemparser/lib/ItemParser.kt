@@ -28,14 +28,6 @@ object ItemParser : Parser {
         gson = builder.create()
     }
 
-    fun registerTypes(gsonBuilder: GsonBuilder) {
-        gsonBuilder.registerTypeAdapter(EnchantData::class.java, EnchantData.ADAPTER)
-        gsonBuilder.registerTypeAdapter(FireworkEffectData::class.java, FireworkEffectData.ADAPTER)
-        gsonBuilder.registerTypeAdapter(InstrumentData::class.java, InstrumentData.ADAPTER)
-        gsonBuilder.registerTypeAdapter(PotionData::class.java, PotionData.ADAPTER)
-        gsonBuilder.registerTypeAdapter(ItemFacade::class.java, ItemFacade.ADAPTER)
-    }
-
     override fun fromJSON(json: String): ItemStack {
         return gson.fromJson(json, ItemFacade::class.java).asItem()
     }
@@ -81,5 +73,14 @@ object ItemParser : Parser {
     // Additional utility function to write ItemFacade to file as JSON
     fun toFile(itemFacade: ItemFacade, file: File) {
         file.writeText(gson.toJson(itemFacade))
+    }
+
+    @JvmStatic
+    fun registerTypes(gsonBuilder: GsonBuilder) {
+        gsonBuilder.registerTypeAdapter(EnchantData::class.java, EnchantData.ADAPTER)
+        gsonBuilder.registerTypeAdapter(FireworkEffectData::class.java, FireworkEffectData.ADAPTER)
+        gsonBuilder.registerTypeAdapter(InstrumentData::class.java, InstrumentData.ADAPTER)
+        gsonBuilder.registerTypeAdapter(PotionData::class.java, PotionData.ADAPTER)
+        gsonBuilder.registerTypeAdapter(ItemFacade::class.java, ItemFacade.ADAPTER)
     }
 }

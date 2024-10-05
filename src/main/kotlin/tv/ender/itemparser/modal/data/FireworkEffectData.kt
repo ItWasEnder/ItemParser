@@ -45,7 +45,7 @@ data class FireworkEffectData(
     }
 
     companion object {
-        val ADAPTER = FireworkEffectDataAdapter()
+        @JvmStatic val ADAPTER = FireworkEffectDataAdapter()
 
         inline fun build(block: FireworkEffectData.() -> Unit): FireworkEffectData {
             return FireworkEffectData().apply(block)

@@ -46,7 +46,7 @@ data class InstrumentData(
     }
 
     companion object {
-        val ADAPTER = InstrumentDataAdapter()
+        @JvmStatic val ADAPTER = InstrumentDataAdapter()
 
         inline fun build(block: InstrumentData.() -> Unit): InstrumentData {
             return InstrumentData().apply(block)

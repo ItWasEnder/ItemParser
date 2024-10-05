@@ -51,7 +51,7 @@ data class EnchantData(var enchantments: List<WrappedEnchantment>? = null) : Ite
     }
 
     companion object {
-        val ADAPTER = EnchantDataAdapter()
+        @JvmStatic val ADAPTER = EnchantDataAdapter()
 
         inline fun build(block: EnchantData.() -> Unit): EnchantData {
             return EnchantData().apply(block)

@@ -5,6 +5,8 @@ import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.stream.JsonReader
 import org.bukkit.inventory.ItemStack
+import org.bukkit.potion.PotionEffect
+import tv.ender.itemparser.adapters.PotionEffectAdapter
 import tv.ender.itemparser.modal.data.EnchantData
 import tv.ender.itemparser.modal.data.FireworkEffectData
 import tv.ender.itemparser.modal.data.InstrumentData
@@ -80,6 +82,7 @@ object ItemParser : Parser {
         gsonBuilder.registerTypeAdapter(EnchantData::class.java, EnchantData.ADAPTER)
         gsonBuilder.registerTypeAdapter(FireworkEffectData::class.java, FireworkEffectData.ADAPTER)
         gsonBuilder.registerTypeAdapter(InstrumentData::class.java, InstrumentData.ADAPTER)
+        gsonBuilder.registerTypeAdapter(PotionEffect::class.java, PotionEffectAdapter.ADAPTER)
         gsonBuilder.registerTypeAdapter(PotionData::class.java, PotionData.ADAPTER)
         gsonBuilder.registerTypeAdapter(ItemFacade::class.java, ItemFacade.ADAPTER)
     }

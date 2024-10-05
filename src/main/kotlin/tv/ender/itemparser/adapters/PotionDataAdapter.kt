@@ -1,8 +1,16 @@
 package tv.ender.itemparser.adapters
 
-import com.google.gson.*
+import com.google.gson.JsonArray
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
+import com.google.gson.JsonObject
+import com.google.gson.JsonSerializationContext
+import com.google.gson.JsonSerializer
+import net.kyori.adventure.key.Key
 import org.bukkit.Color
-import org.bukkit.potion.PotionType
+import org.bukkit.Registry
+import org.bukkit.potion.PotionEffect
 import tv.ender.itemparser.modal.data.PotionData
 import java.lang.reflect.Type
 
@@ -10,49 +18,61 @@ class PotionDataAdapter : JsonSerializer<PotionData>, JsonDeserializer<PotionDat
 
     override fun serialize(src: PotionData, typeOfSrc: Type, context: JsonSerializationContext): JsonElement {
         val jsonObject = JsonObject().apply {
-            addProperty("type", src.type.name)
 
-            src.color?.also {
+            src.type?.let { type -> addProperty("type", type.key().asString()) }
+
+            src.color?.let { color ->
                 add("color", JsonObject().apply {
-                    addProperty("red", src.color!!.red)
-                    addProperty("green", src.color!!.green)
-                    addProperty("blue", src.color!!.blue)
-                    addProperty("alpha", src.color!!.alpha)
+                    addProperty("red", color.red)
+                    addProperty("green", color.green)
+                    addProperty("blue", color.blue)
+                    addProperty("alpha", color.alpha)
                 })
             }
 
-            addProperty("extended", src.extended)
-            addProperty("upgraded", src.upgraded)
+
+            add(
+                "customEffects",
+                JsonArray().also { arr ->
+                    src.customEffects
+                        .map { pot -> context.serialize(pot, PotionEffect::class.java) }
+                        .forEach { arr.add(it) }
+                }
+            )
         }
+
         return jsonObject
     }
 
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): PotionData {
         val jsonObject = json.asJsonObject
 
-        var type = PotionType.AWKWARD
-        val color: Color?
+        val type = if (jsonObject.has("type")) {
+            jsonObject.get("type").asString.let {
+                Registry.POTION.get(Key.key(it))
+            }
+        } else null
 
-        runCatching {
-            type = PotionType.valueOf(jsonObject.get("type").asString)
-        }
+        val color = if (jsonObject.has("color")) {
+            val colorObj = jsonObject.getAsJsonObject("color")
+            val red = colorObj.get("red").asInt
+            val green = colorObj.get("green").asInt
+            val blue = colorObj.get("blue").asInt
+            val alpha = colorObj.get("alpha").asInt
+            Color.fromARGB(alpha, red, green, blue)
+        } else null
 
-        if (jsonObject.has("color")
-            && !jsonObject.get("color").isJsonArray
-        ) {
-            val colorObject = jsonObject.getAsJsonObject("color")
-            val r = Math.clamp(colorObject.get("red").asLong, 0, 255)
-            val g = Math.clamp(colorObject.get("green").asLong, 0, 255)
-            val b = Math.clamp(colorObject.get("blue").asLong, 0, 255)
-            val a = Math.clamp(colorObject.get("alpha").asLong, 0, 255)
-            color = Color.fromARGB(a, r, g, b)
-        } else {
-            color = type.effectType?.color
-        }
+        val customEffects = if (jsonObject.has("customEffects")) {
+            val effectsArray = jsonObject.getAsJsonArray("customEffects")
+            effectsArray.map { effectJson ->
+                context.deserialize<PotionEffect>(effectJson, PotionEffect::class.java)
+            }
+        } else emptyList()
 
-        val extended = jsonObject.get("extended").asBoolean
-        val upgraded = jsonObject.get("upgraded").asBoolean
-
-        return PotionData(type, color, extended, upgraded)
+        return PotionData(
+            type = type,
+            color = color,
+            customEffects = customEffects
+        )
     }
 }

@@ -118,7 +118,7 @@ data class ItemFacade(
     }
 
     companion object {
-        val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
+        @JvmStatic val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
 
         fun of(stack: ItemStack): ItemFacade {
             val meta = stack.itemMeta ?: return ItemFacade(stack.type)

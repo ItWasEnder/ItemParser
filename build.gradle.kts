@@ -15,7 +15,7 @@ if (localProperties.exists()) {
 }
 
 group = "tv.ender.itemparser"
-version = "1.0.15"
+version = "1.0.16"
 
 val gsonVersion = "2.8.9"
 val mockkVersion = "1.13.12"

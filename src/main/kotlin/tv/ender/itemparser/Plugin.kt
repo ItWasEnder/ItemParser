@@ -15,7 +15,7 @@ class Plugin : JavaPlugin() {
         // Plugin startup logic
         if (DEBUG) {
             val itemJson =
-                "{\"displayName\":\"&#FF369ATest Item\",\"material\":\"ENDER_EYE\",\"model\":1,\"count\":1,\"hideEnchants\":false,\"lore\":[\"Obtained from deliveries.\"],\"extra-data\":{\"enchantData\":[{\"type\":\"unbreaking\",\"level\":1}],\"pdc\":[{\"key\":\"pyrofishingpro:first\",\"type\":\"DOUBLE\",\"value\":4.1},{\"key\":\"pyrofishingpro:second\",\"type\":\"STRING\",\"value\":\"test\"},{\"key\":\"pyrofishingpro:third\",\"type\":\"INTEGER\",\"value\":9}]}}"
+                "{\"material\":\"POTION\",\"model\":0,\"count\":1,\"hideEnchants\":false,\"extra-data\":{\"potionData\":{\"color\":{\"red\":0,\"green\":142,\"blue\":0,\"alpha\":255},\"customEffects\":[{\"type\":\"minecraft:strength\",\"duration\":69,\"amplifier\":69,\"ambient\":false,\"particles\":false,\"icon\":false}]}}}"
 
             try {
                 ItemParser.fromJSON(itemJson).also {

@@ -88,8 +88,8 @@ public class ColorUtil {
         return hexColorization(text);
     }
 
-    public static @NotNull String color(@NotNull String textToTranslate) {
-        return color('&', textToTranslate);
+    public static @NotNull String color(@NotNull String text) {
+        return color('&', hex(text));
     }
 
     public static @NotNull String color(char altColorChar, @NotNull String textToTranslate) {

@@ -3,7 +3,6 @@ package tv.ender.itemparser.utils
 import com.destroystokyo.paper.profile.PlayerProfile
 import com.destroystokyo.paper.profile.ProfileProperty
 import org.bukkit.Bukkit
-import org.bukkit.ChatColor
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.Damageable
@@ -12,6 +11,7 @@ import org.bukkit.inventory.meta.ItemMeta
 import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
+import tv.ender.itemparser.text.ColorUtil
 import java.util.UUID
 
 object MetaUtils {
@@ -61,7 +61,7 @@ object MetaUtils {
                 itemColor = "&e"
             }
 
-            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', (itemColor + meta.getDisplayName())))
+            meta.setDisplayName(ColorUtil.color(itemColor + meta.getDisplayName()))
         }
     }
 

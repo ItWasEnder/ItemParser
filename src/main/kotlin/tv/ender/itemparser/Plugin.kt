@@ -1,8 +1,13 @@
 package tv.ender.itemparser
 
+import org.bukkit.Material
+import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.BookMeta
+import org.bukkit.inventory.meta.WritableBookMeta
 import org.bukkit.plugin.java.JavaPlugin
 import tv.ender.itemparser.lib.ItemParser
 import tv.ender.itemparser.modal.item.toFacade
+import tv.ender.itemparser.text.ColorUtil
 
 class Plugin : JavaPlugin() {
     companion object {
@@ -23,6 +28,25 @@ class Plugin : JavaPlugin() {
                     println("similar: ${it.toFacade().isSimilar(it)}")
                     println(it.itemMeta)
                 }
+
+                println("------------------")
+
+                val item = ItemStack(Material.WRITTEN_BOOK, 1)
+
+                item.editMeta { meta ->
+                    val bookMeta = meta as BookMeta
+
+                    bookMeta.setTitle(ColorUtil.color("&atest"))
+                    bookMeta.pages = listOf("test1", "test2")
+                    bookMeta.author = "dumb"
+
+                    println(meta)
+                }
+
+                println("isBook: " + (item.itemMeta is BookMeta))
+                println("isBook2: " + (item.itemMeta is WritableBookMeta))
+
+                println(ItemParser.toJSON(item))
             } catch (e: Exception) {
                 e.printStackTrace()
                 server.shutdown()
@@ -33,4 +57,8 @@ class Plugin : JavaPlugin() {
     override fun onDisable() {
         // Plugin shutdown logic
     }
+}
+
+private infix fun String.and(any: Any?): Any {
+    return this + " " + any.toString()
 }

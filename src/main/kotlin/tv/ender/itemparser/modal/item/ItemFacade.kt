@@ -1,15 +1,38 @@
 package tv.ender.itemparser.modal.item
 
 import net.kyori.adventure.text.format.TextDecoration
-import org.bukkit.ChatColor
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemFlag
 import org.bukkit.inventory.ItemStack
-import org.bukkit.inventory.meta.*
+import org.bukkit.inventory.meta.ArmorMeta
+import org.bukkit.inventory.meta.AxolotlBucketMeta
+import org.bukkit.inventory.meta.BookMeta
+import org.bukkit.inventory.meta.EnchantmentStorageMeta
+import org.bukkit.inventory.meta.FireworkEffectMeta
+import org.bukkit.inventory.meta.ItemMeta
+import org.bukkit.inventory.meta.MusicInstrumentMeta
+import org.bukkit.inventory.meta.OminousBottleMeta
+import org.bukkit.inventory.meta.PotionMeta
+import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataContainer
 import tv.ender.itemparser.adapters.ItemFacadeAdapter
-import tv.ender.itemparser.modal.data.*
+import tv.ender.itemparser.modal.data.ArmorTrimData
+import tv.ender.itemparser.modal.data.AxolotlData
+import tv.ender.itemparser.modal.data.BookData
+import tv.ender.itemparser.modal.data.EnchantData
+import tv.ender.itemparser.modal.data.FireworkEffectData
+import tv.ender.itemparser.modal.data.InstrumentData
+import tv.ender.itemparser.modal.data.OminousData
+import tv.ender.itemparser.modal.data.PotionData
+import tv.ender.itemparser.modal.data.toArmorTrimData
+import tv.ender.itemparser.modal.data.toAxolotlData
+import tv.ender.itemparser.modal.data.toBookData
+import tv.ender.itemparser.modal.data.toEnchantData
+import tv.ender.itemparser.modal.data.toFireworkEffectData
+import tv.ender.itemparser.modal.data.toInstrumentData
+import tv.ender.itemparser.modal.data.toOminousData
+import tv.ender.itemparser.modal.data.toPotionData
 import tv.ender.itemparser.persistent.PersistentDataSerializer
 import tv.ender.itemparser.text.ColorUtil
 import tv.ender.itemparser.text.ColorUtil.LEGACY
@@ -32,6 +55,7 @@ data class ItemFacade(
     var armorTrimData: ArmorTrimData? = null,
     var pdcMapList: List<Map<*, *>>? = null,
     var ominousData: OminousData? = null,
+    var bookData: BookData? = null,
 ) {
 
     fun isSimilar(stack: ItemStack): Boolean {
@@ -60,6 +84,8 @@ data class ItemFacade(
 
         if (ominousData?.isSimilar(stack) == false) return false
 
+        if (bookData?.isSimilar(stack) == false) return false
+
         if (pdcMapList?.isNotEmpty() == true) {
             for (map in pdcMapList!!) {
                 val key = NamespacedKey.fromString(map["key"].toString()) ?: continue
@@ -82,12 +108,12 @@ data class ItemFacade(
         if (model != 0) meta.setCustomModelData(model)
 
         if (displayName != null) {
-            val colored = ColorUtil.hex(displayName ?: "%%ERR%%")
+            val colored = ColorUtil.color(displayName ?: "%%ERR%%")
             meta.displayName(LEGACY.deserialize(colored).decoration(TextDecoration.ITALIC, false))
         }
 
         if (lore.isNotEmpty()) {
-            meta.lore = lore.map { ChatColor.translateAlternateColorCodes('&', it) }
+            meta.lore = lore.map { ColorUtil.color(it) }
         }
 
         texture?.also { MetaUtils.applyTexture(meta, it) }
@@ -100,6 +126,7 @@ data class ItemFacade(
         armorTrimData?.takeIf { meta is ArmorMeta }?.apply(meta as ArmorMeta)
         instrumentData?.takeIf { meta is MusicInstrumentMeta }?.apply(meta as MusicInstrumentMeta)
         ominousData?.takeIf { meta is OminousBottleMeta }?.apply(meta as OminousBottleMeta)
+        bookData?.takeIf { meta is BookMeta }?.apply(meta as BookMeta)
 
         if (hideEnchants) {
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS)
@@ -118,7 +145,8 @@ data class ItemFacade(
     }
 
     companion object {
-        @JvmStatic val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
+        @JvmStatic
+        val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
 
         fun of(stack: ItemStack): ItemFacade {
             val meta = stack.itemMeta ?: return ItemFacade(stack.type)
@@ -140,6 +168,8 @@ data class ItemFacade(
             if (meta is MusicInstrumentMeta) builder.instrumentData(meta.toInstrumentData())
             if (meta is ArmorMeta && meta.hasTrim()) builder.armorTrimData(meta.toArmorTrimData())
             if (meta is OminousBottleMeta) builder.ominousData(meta.toOminousData())
+            if (meta is BookMeta) builder.bookData(meta.toBookData())
+
             if (meta.persistentDataContainer.keys.isNotEmpty()) {
                 builder.publicBukkitData(meta.persistentDataContainer)
             }
@@ -166,6 +196,7 @@ data class ItemFacade(
         private var armorTrimData: ArmorTrimData? = null
         private var pdcMapList: List<Map<*, *>>? = null
         private var ominousData: OminousData? = null
+        private var bookData: BookData? = null
 
         fun displayName(displayName: String?) = apply { this.displayName = displayName }
         fun material(material: Material) = apply { this.material = material }
@@ -180,6 +211,7 @@ data class ItemFacade(
         fun axolotlData(axolotlData: AxolotlData?) = apply { this.axolotlData = axolotlData }
         fun armorTrimData(armorTrimData: ArmorTrimData?) = apply { this.armorTrimData = armorTrimData }
         fun ominousData(data: OminousData?) = apply { this.ominousData = data }
+        fun bookData(data: BookData?) = apply { this.bookData = data }
         fun fireworkEffectData(fireworkEffectData: FireworkEffectData?) =
             apply { this.fireworkEffectData = fireworkEffectData }
 
@@ -202,6 +234,7 @@ data class ItemFacade(
             armorTrimData = armorTrimData,
             pdcMapList = pdcMapList,
             ominousData = ominousData,
+            bookData = bookData,
         )
     }
 }

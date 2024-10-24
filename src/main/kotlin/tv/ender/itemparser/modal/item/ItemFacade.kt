@@ -17,6 +17,7 @@ import org.bukkit.inventory.meta.PotionMeta
 import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataContainer
 import tv.ender.itemparser.adapters.ItemFacadeAdapter
+import tv.ender.itemparser.modal.config.Options
 import tv.ender.itemparser.modal.data.ArmorTrimData
 import tv.ender.itemparser.modal.data.AxolotlData
 import tv.ender.itemparser.modal.data.BookData
@@ -57,8 +58,8 @@ data class ItemFacade(
     var ominousData: OminousData? = null,
     var bookData: BookData? = null,
 ) {
-
-    fun isSimilar(stack: ItemStack): Boolean {
+    @JvmOverloads
+    fun isSimilar(stack: ItemStack, options: Options = Options()): Boolean {
         if (stack.type != material) return false
 
         val meta: ItemMeta = stack.itemMeta ?: return false
@@ -67,12 +68,12 @@ data class ItemFacade(
             return texture.equals(MetaUtils.getTexture(meta), ignoreCase = true)
         }
 
-        if (!meta.hasCustomModelData() && model != 0) return false
-        if (meta.hasCustomModelData() && model != meta.customModelData) return false
+        if (options.modelData && !meta.hasCustomModelData() && model != 0) return false
+        if (options.modelData && meta.hasCustomModelData() && model != meta.customModelData) return false
 
-        if (potionData?.isSimilar(stack) == false) return false
+        if (options.potionData && potionData?.isSimilar(stack) == false) return false
 
-        if (enchantData?.isSimilar(stack) == false) return false
+        if (options.enchantData && enchantData?.isSimilar(stack) == false) return false
 
         if (instrumentData?.isSimilar(stack) == false) return false
 
@@ -84,15 +85,19 @@ data class ItemFacade(
 
         if (ominousData?.isSimilar(stack) == false) return false
 
-        if (bookData?.isSimilar(stack) == false) return false
+        if (options.bookData && bookData?.isSimilar(stack) == false) return false
 
-        if (pdcMapList?.isNotEmpty() == true) {
+        if (options.nbtKeys && pdcMapList?.isNotEmpty() == true) {
             for (map in pdcMapList!!) {
                 val key = NamespacedKey.fromString(map["key"].toString()) ?: continue
                 val type = PersistentDataSerializer.getNativePersistentDataTypeByFieldName(map["type"].toString())
                 val value = map["value"]
 
-                if (!meta.persistentDataContainer.has(key, type) || meta.persistentDataContainer[key, type] != value) {
+                if (!meta.persistentDataContainer.has(key, type)) {
+                    return false
+                }
+
+                if (options.nbtValues && meta.persistentDataContainer[key, type] != value) {
                     return false
                 }
             }

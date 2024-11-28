@@ -170,6 +170,7 @@ data class ItemFacade(
             if (meta.hasDisplayName()) builder.displayName(metaDisplayName)
             if (meta.hasCustomModelData()) builder.model(meta.customModelData)
             if (meta.hasLore()) builder.lore(meta.lore ?: emptyList())
+            if (meta.hasRarity()) builder.rarity(meta.rarity.ordinal)
             if (meta is SkullMeta) meta.playerProfile?.properties?.firstOrNull { it.name == "textures" }
                 ?.let { builder.texture(it.value) }
             if (meta is PotionMeta) builder.potionData(meta.toPotionData())

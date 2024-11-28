@@ -7,6 +7,7 @@ data class Options(
     val bookData: Boolean = true,
     val nbtValues: Boolean = true,
     val nbtKeys: Boolean = true,
+    val rarity: Boolean = false,
 ) {
     companion object {
         @JvmStatic

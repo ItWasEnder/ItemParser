@@ -4,6 +4,7 @@ import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemFlag
+import org.bukkit.inventory.ItemRarity
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ArmorMeta
 import org.bukkit.inventory.meta.AxolotlBucketMeta
@@ -47,6 +48,7 @@ data class ItemFacade(
     var model: Int = 0,
     var count: Int = 1,
     var hideEnchants: Boolean = false,
+    var rarity: Int? = null,
     var texture: String? = null,
     var potionData: PotionData? = null,
     var enchantData: EnchantData? = null,
@@ -74,6 +76,9 @@ data class ItemFacade(
         if (options.potionData && potionData?.isSimilar(stack) == false) return false
 
         if (options.enchantData && enchantData?.isSimilar(stack) == false) return false
+
+        if (options.rarity && !meta.hasRarity() && rarity != null) return false
+        if (options.rarity && meta.hasRarity() && rarity != meta.rarity.ordinal) return false
 
         if (instrumentData?.isSimilar(stack) == false) return false
 
@@ -132,6 +137,7 @@ data class ItemFacade(
         instrumentData?.takeIf { meta is MusicInstrumentMeta }?.apply(meta as MusicInstrumentMeta)
         ominousData?.takeIf { meta is OminousBottleMeta }?.apply(meta as OminousBottleMeta)
         bookData?.takeIf { meta is BookMeta }?.apply(meta as BookMeta)
+        rarity?.also { meta.setRarity(ItemRarity.values()[it]) }
 
         if (hideEnchants) {
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS)
@@ -192,6 +198,7 @@ data class ItemFacade(
         private var model: Int = 0
         private var count: Int = 1
         private var hideEnchants: Boolean = false
+        private var rarity: Int? = null
         private var texture: String? = null
         private var potionData: PotionData? = null
         private var enchantData: EnchantData? = null
@@ -209,6 +216,7 @@ data class ItemFacade(
         fun model(model: Int) = apply { this.model = model }
         fun count(count: Int) = apply { this.count = count }
         fun hideEnchants(hideEnchants: Boolean) = apply { this.hideEnchants = hideEnchants }
+        fun rarity(rarity: Int) = apply { this.rarity = rarity }
         fun texture(texture: String?) = apply { this.texture = texture }
         fun potionData(potionData: PotionData?) = apply { this.potionData = potionData }
         fun enchantData(enchantData: EnchantData?) = apply { this.enchantData = enchantData }
@@ -233,6 +241,7 @@ data class ItemFacade(
             texture = texture,
             potionData = potionData,
             enchantData = enchantData,
+            rarity = rarity,
             instrumentData = instrumentData,
             axolotlData = axolotlData,
             fireworkEffectData = fireworkEffectData,

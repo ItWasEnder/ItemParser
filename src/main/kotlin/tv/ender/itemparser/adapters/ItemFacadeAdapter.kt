@@ -48,6 +48,8 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
 
         jsonObject["hideEnchants"]?.asBoolean?.let { builder.hideEnchants(it) }
 
+        jsonObject["rarity"]?.asInt?.let { builder.rarity(it) }
+
         jsonObject["extra-data"]?.asJsonObject?.let { extraData ->
             extraData["potionData"]?.let {
                 val potionData = context.deserialize<PotionData>(it, PotionData::class.java)
@@ -140,6 +142,7 @@ class ItemFacadeAdapter : JsonSerializer<ItemFacade>, JsonDeserializer<ItemFacad
             addProperty("count", itemFacade.count)
             addProperty("hideEnchants", itemFacade.hideEnchants)
 
+            itemFacade.rarity?.let { addProperty("rarity", it) }
             itemFacade.texture?.let { addProperty("texture", it) }
 
             itemFacade.lore.takeIf { it.isNotEmpty() }?.let {

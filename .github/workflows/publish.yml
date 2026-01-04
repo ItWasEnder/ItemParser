@@ -4,11 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version to build (e.g. 1.3.1). If omitted, uses the tag name without leading 'v'."
+        description: "Version to publish (e.g. 1.3.1). If omitted, uses the tag name without leading 'v'."
         required: false
         type: string
-  release:
-    types: [published]
   push:
     tags:
       - "v*"
@@ -16,6 +14,11 @@ on:
 permissions:
   contents: read
   packages: write
+
+# Avoid duplicate publishes for the same version (e.g. manual reruns).
+concurrency:
+  group: publish-${{ inputs.version || github.ref_name }}
+  cancel-in-progress: true
 
 jobs:
   publish:
@@ -41,8 +44,6 @@ jobs:
           set -euo pipefail
           if [[ -n "${{ inputs.version || '' }}" ]]; then
             v="${{ inputs.version }}"
-          elif [[ "${{ github.event_name }}" == "release" ]]; then
-            v="${{ github.event.release.tag_name }}"
           else
             v="${GITHUB_REF_NAME}"
           fi
@@ -53,7 +54,35 @@ jobs:
           fi
           echo "version=$v" >> "$GITHUB_OUTPUT"
 
+      - name: Log publish context (no secrets)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "event_name=${{ github.event_name }}"
+          echo "ref=${{ github.ref }}"
+          echo "ref_name=${{ github.ref_name }}"
+          echo "inputs.version=${{ inputs.version || '' }}"
+          echo "resolved.version=${{ steps.ver.outputs.version }}"
+
+      - name: "Preflight: check if version already exists in GitHub Packages (no secrets)"
+        id: preflight
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          url="https://maven.pkg.github.com/${GITHUB_REPOSITORY}/tv/ender/itemparser/itemparser/${VERSION}/itemparser-${VERSION}.jar"
+          code="$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${GITHUB_TOKEN}" -L "$url" || true)"
+          echo "preflight.http_code=$code"
+          if [[ "$code" == "200" ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish to GitHub Packages
+        if: steps.preflight.outputs.exists != 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ORG_GRADLE_PROJECT_releaseVersion: ${{ steps.ver.outputs.version }}

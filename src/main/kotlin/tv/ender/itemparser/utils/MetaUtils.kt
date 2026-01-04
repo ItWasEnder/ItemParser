@@ -2,6 +2,7 @@ package tv.ender.itemparser.utils
 
 import com.destroystokyo.paper.profile.PlayerProfile
 import com.destroystokyo.paper.profile.ProfileProperty
+import java.util.UUID
 import org.bukkit.Bukkit
 import org.bukkit.NamespacedKey
 import org.bukkit.inventory.ItemStack
@@ -12,11 +13,11 @@ import org.bukkit.inventory.meta.SkullMeta
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
 import tv.ender.itemparser.text.ColorUtil
-import java.util.UUID
 
 object MetaUtils {
     fun applyTexture(meta: ItemMeta?, url: String, name: String? = null) {
-        if (name != null) assert(name.length < 16) { "Name must be equal to or less than 16 characters." }
+        if (name != null)
+                require(name.length < 16) { "Name must be equal to or less than 16 characters." }
 
         /* this will also handle null meta */
         if (meta !is SkullMeta) {
@@ -86,16 +87,12 @@ object MetaUtils {
             return PersistentDataType.SHORT
         } else if (container.has(key, PersistentDataType.STRING)) {
             return PersistentDataType.STRING
-        } else if (container.has(
-                key,
-                PersistentDataType.TAG_CONTAINER
-            )
-        ) {
+        } else if (container.has(key, PersistentDataType.TAG_CONTAINER)) {
             return PersistentDataType.TAG_CONTAINER
         } else if (container.has<Array<PersistentDataContainer>, Array<PersistentDataContainer>>(
-                key,
-                PersistentDataType.TAG_CONTAINER_ARRAY
-            )
+                        key,
+                        PersistentDataType.TAG_CONTAINER_ARRAY
+                )
         ) {
             return PersistentDataType.TAG_CONTAINER_ARRAY
         }
@@ -104,7 +101,7 @@ object MetaUtils {
     }
 
     fun readPBV(stack: ItemStack, key: NamespacedKey): String {
-        val meta: ItemMeta = stack.getItemMeta()
+        val meta: ItemMeta = stack.itemMeta ?: return ""
         val container: PersistentDataContainer = meta.getPersistentDataContainer()
         var value = ""
 
@@ -134,12 +131,12 @@ object MetaUtils {
     }
 
     fun <T, Z : Any> writePVB(
-        stack: ItemStack,
-        key: NamespacedKey,
-        value: Z,
-        type: PersistentDataType<T, Z>,
+            stack: ItemStack,
+            key: NamespacedKey,
+            value: Z,
+            type: PersistentDataType<T, Z>,
     ): ItemStack {
-        val meta: ItemMeta = stack.getItemMeta()
+        val meta: ItemMeta = stack.itemMeta ?: return stack
         val container: PersistentDataContainer = meta.getPersistentDataContainer()
 
         container.set(key, type, value)

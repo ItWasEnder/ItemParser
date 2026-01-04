@@ -12,15 +12,14 @@ import tv.ender.itemparser.text.ColorUtil
 class Plugin : JavaPlugin() {
     companion object {
         val DEBUG: Boolean
-            get() = System.getenv()["debug"].toBoolean()
+            get() = System.getenv("debug")?.toBoolean() ?: false
     }
-
 
     override fun onEnable() {
         // Plugin startup logic
         if (DEBUG) {
             val itemJson =
-                "{\"material\":\"POTION\",\"model\":0,\"count\":1,\"hideEnchants\":false,\"extra-data\":{\"potionData\":{\"color\":{\"red\":0,\"green\":142,\"blue\":0,\"alpha\":255},\"customEffects\":[{\"type\":\"minecraft:strength\",\"duration\":69,\"amplifier\":69,\"ambient\":false,\"particles\":false,\"icon\":false}]}}}"
+                    "{\"material\":\"POTION\",\"model\":0,\"count\":1,\"hideEnchants\":false,\"extra-data\":{\"potionData\":{\"color\":{\"red\":0,\"green\":142,\"blue\":0,\"alpha\":255},\"customEffects\":[{\"type\":\"minecraft:strength\",\"duration\":69,\"amplifier\":69,\"ambient\":false,\"particles\":false,\"icon\":false}]}}}"
 
             try {
                 ItemParser.fromJSON(itemJson).also {
@@ -49,7 +48,8 @@ class Plugin : JavaPlugin() {
                 println(ItemParser.toJSON(item))
             } catch (e: Exception) {
                 e.printStackTrace()
-                server.shutdown()
+                // Never take down the whole server from a library/plugin debug path.
+                server.pluginManager.disablePlugin(this)
             }
         }
     }

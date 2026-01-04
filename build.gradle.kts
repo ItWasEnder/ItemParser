@@ -83,6 +83,7 @@ tasks {
 }
 
 publishing {
+    val githubRepo = (System.getenv("GITHUB_REPOSITORY") ?: "ender/ItemParser").trim()
     publications {
         create<MavenPublication>("mavenJava") {
             artifact(tasks.shadowJar.get()) {
@@ -92,6 +93,12 @@ publishing {
             groupId = project.group.toString()
             artifactId = rootProject.name
             version = project.version.toString()
+
+            pom {
+                name.set(rootProject.name)
+                description.set("Minecraft/Paper item parsing utilities")
+                url.set("https://github.com/$githubRepo")
+            }
         }
     }
     repositories {
@@ -101,6 +108,17 @@ publishing {
             credentials {
                 username = findProperty("repoUser") as String? ?: System.getenv("REPO_USER")
                 password = findProperty("repoPassword") as String? ?: System.getenv("REPO_PASSWORD")
+            }
+        }
+
+        // GitHub Packages (Maven). Used by the GitHub Actions workflow.
+        // Docs: https://docs.github.com/packages/working-with-a-github-packages-registry/working-with-the-apache-maven-registry
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/$githubRepo")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     }

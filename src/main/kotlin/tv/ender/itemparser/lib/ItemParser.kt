@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
 import com.google.gson.stream.JsonReader
+import java.io.File
 import org.bukkit.inventory.ItemStack
 import org.bukkit.potion.PotionEffect
 import tv.ender.itemparser.adapters.PotionEffectAdapter
@@ -14,16 +15,16 @@ import tv.ender.itemparser.modal.data.PotionData
 import tv.ender.itemparser.modal.interfaces.Parser
 import tv.ender.itemparser.modal.item.ItemFacade
 import tv.ender.itemparser.modal.item.toFacade
-import java.io.File
 
 object ItemParser : Parser {
     val gson: Gson
 
     init {
-        val builder = GsonBuilder()
-            .setPrettyPrinting()
-            .enableComplexMapKeySerialization()
-            .disableHtmlEscaping()
+        val builder =
+                GsonBuilder()
+                        .setPrettyPrinting()
+                        .enableComplexMapKeySerialization()
+                        .disableHtmlEscaping()
 
         registerTypes(builder)
 
@@ -35,12 +36,14 @@ object ItemParser : Parser {
     }
 
     override fun fromJSON(file: File): ItemStack {
-        // make a file reader
-        assert(file.exists()) { "The given file \"${file.name}\" does not exist" }
-        assert(file.isFile()) { "The given file path does not point to a file (possible folder)" }
+        require(file.exists()) { "The given file \"${file.name}\" does not exist" }
+        require(file.isFile) { "The given file path does not point to a file (possible folder)" }
 
-        return with(JsonReader(file.reader())) {
-            gson.fromJson<ItemFacade>(this, ItemFacade::class.java).asItem()
+        // Ensure the reader is closed (prevents FD leaks on repeated calls).
+        return file.reader().use { reader ->
+            JsonReader(reader).use { jsonReader ->
+                gson.fromJson<ItemFacade>(jsonReader, ItemFacade::class.java).asItem()
+            }
         }
     }
 
@@ -64,8 +67,8 @@ object ItemParser : Parser {
 
     // Additional utility function to convert JSON file to ItemFacade
     fun fromFileToItemFacade(file: File): ItemFacade {
-        assert(file.exists()) { "The given file \"${file.name}\" does not exist" }
-        assert(file.isFile()) { "The given file path does not point to a file (possible folder)" }
+        require(file.exists()) { "The given file \"${file.name}\" does not exist" }
+        require(file.isFile) { "The given file path does not point to a file (possible folder)" }
 
         return JsonReader(file.reader()).use { reader ->
             gson.fromJson(reader, ItemFacade::class.java)

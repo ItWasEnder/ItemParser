@@ -1,5 +1,7 @@
 package tv.ender.itemparser.modal.item
 
+import java.util.TreeMap
+import kotlin.math.max
 import net.kyori.adventure.text.format.TextDecoration
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
@@ -39,27 +41,55 @@ import tv.ender.itemparser.persistent.PersistentDataSerializer
 import tv.ender.itemparser.text.ColorUtil
 import tv.ender.itemparser.text.ColorUtil.LEGACY
 import tv.ender.itemparser.utils.MetaUtils
-import kotlin.math.max
 
 data class ItemFacade(
-    var material: Material,
-    var displayName: String? = null,
-    var lore: List<String> = emptyList(),
-    var model: Int = 0,
-    var count: Int = 1,
-    var hideEnchants: Boolean = false,
-    var rarity: Int? = null,
-    var texture: String? = null,
-    var potionData: PotionData? = null,
-    var enchantData: EnchantData? = null,
-    var instrumentData: InstrumentData? = null,
-    var axolotlData: AxolotlData? = null,
-    var fireworkEffectData: FireworkEffectData? = null,
-    var armorTrimData: ArmorTrimData? = null,
-    var pdcMapList: List<Map<*, *>>? = null,
-    var ominousData: OminousData? = null,
-    var bookData: BookData? = null,
+        var material: Material,
+        var displayName: String? = null,
+        var lore: List<String> = emptyList(),
+        var model: Int = 0,
+        var count: Int = 1,
+        var hideEnchants: Boolean = false,
+        var rarity: Int? = null,
+        var texture: String? = null,
+        var potionData: PotionData? = null,
+        var enchantData: EnchantData? = null,
+        var instrumentData: InstrumentData? = null,
+        var axolotlData: AxolotlData? = null,
+        var fireworkEffectData: FireworkEffectData? = null,
+        var armorTrimData: ArmorTrimData? = null,
+        var pdcMapList: List<Map<*, *>>? = null,
+        var ominousData: OminousData? = null,
+        var bookData: BookData? = null,
 ) {
+    private fun normalize(obj: Any?): Any? {
+        return when (obj) {
+            null -> null
+            is Map<*, *> -> {
+                val tm = TreeMap<String, Any?>()
+                for ((k, v) in obj) {
+                    if (k == null) continue
+                    tm[k.toString()] = normalize(v)
+                }
+                tm
+            }
+            is List<*> -> {
+                val normed = obj.map { normalize(it) }
+                // If this is a "maplist" (PDC serialized list), sort by "key"+"type" to ignore
+                // order instability.
+                val allMaps = normed.all { it is Map<*, *> && (it as Map<*, *>).containsKey("key") }
+                if (allMaps) {
+                    normed.sortedBy {
+                        val m = it as Map<*, *>
+                        (m["key"]?.toString() ?: "") + ":" + (m["type"]?.toString() ?: "")
+                    }
+                } else {
+                    normed
+                }
+            }
+            else -> obj
+        }
+    }
+
     @JvmOverloads
     fun isSimilar(stack: ItemStack, options: Options = Options()): Boolean {
         if (stack.type != material) return false
@@ -71,7 +101,8 @@ data class ItemFacade(
         }
 
         if (options.modelData && !meta.hasCustomModelData() && model != 0) return false
-        if (options.modelData && meta.hasCustomModelData() && model != meta.customModelData) return false
+        if (options.modelData && meta.hasCustomModelData() && model != meta.customModelData)
+                return false
 
         if (options.potionData && potionData?.isSimilar(stack) == false) return false
 
@@ -95,15 +126,46 @@ data class ItemFacade(
         if (options.nbtKeys && pdcMapList?.isNotEmpty() == true) {
             for (map in pdcMapList!!) {
                 val key = NamespacedKey.fromString(map["key"].toString()) ?: continue
-                val type = PersistentDataSerializer.getNativePersistentDataTypeByFieldName(map["type"].toString())
+                val type =
+                        PersistentDataSerializer.getNativePersistentDataTypeByFieldName(
+                                map["type"].toString()
+                        )
                 val value = map["value"]
 
                 if (!meta.persistentDataContainer.has(key, type)) {
                     return false
                 }
 
-                if (options.nbtValues && meta.persistentDataContainer[key, type] != value) {
-                    return false
+                if (options.nbtValues) {
+                    val actual = meta.persistentDataContainer[key, type]
+
+                    val typeName = map["type"]?.toString()
+                    if (typeName == "TAG_CONTAINER") {
+                        val actualNorm =
+                                normalize(
+                                        if (actual is PersistentDataContainer)
+                                                PersistentDataSerializer.toMapList(actual)
+                                        else null
+                                )
+                        val expectedNorm = normalize(value)
+                        val eq = (actualNorm == expectedNorm)
+                        if (!eq) return false
+                    } else if (typeName == "TAG_CONTAINER_ARRAY") {
+                        val serialized: List<List<Map<*, *>>>? =
+                                if (actual is Array<*>) {
+                                    actual.filterIsInstance<PersistentDataContainer>().map {
+                                        PersistentDataSerializer.toMapList(it)
+                                    }
+                                } else {
+                                    null
+                                }
+                        val actualNorm = normalize(serialized)
+                        val expectedNorm = normalize(value)
+                        val eq = (actualNorm == expectedNorm)
+                        if (!eq) return false
+                    } else {
+                        if (actual != value) return false
+                    }
                 }
             }
         }
@@ -156,25 +218,25 @@ data class ItemFacade(
     }
 
     companion object {
-        @JvmStatic
-        val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
+        @JvmStatic val ADAPTER: ItemFacadeAdapter = ItemFacadeAdapter()
 
         fun of(stack: ItemStack): ItemFacade {
             val meta = stack.itemMeta ?: return ItemFacade(stack.type)
             val metaDisplayName = meta.displayName()?.let { LEGACY.serialize(it) } ?: ""
 
-            val builder = builder()
-                .material(stack.type)
-                .count(stack.amount)
+            val builder = builder().material(stack.type).count(stack.amount)
 
             if (meta.hasDisplayName()) builder.displayName(metaDisplayName)
             if (meta.hasCustomModelData()) builder.model(meta.customModelData)
             if (meta.hasLore()) builder.lore(meta.lore ?: emptyList())
             if (meta.hasRarity()) builder.rarity(meta.rarity.ordinal)
-            if (meta is SkullMeta) meta.playerProfile?.properties?.firstOrNull { it.name == "textures" }
-                ?.let { builder.texture(it.value) }
+            if (meta is SkullMeta)
+                    meta.playerProfile?.properties?.firstOrNull { it.name == "textures" }?.let {
+                        builder.texture(it.value)
+                    }
             if (meta is PotionMeta) builder.potionData(meta.toPotionData())
-            if (meta is EnchantmentStorageMeta || meta.hasEnchants()) builder.enchantData(meta.toEnchantData())
+            if (meta is EnchantmentStorageMeta || meta.hasEnchants())
+                    builder.enchantData(meta.toEnchantData())
             if (meta is AxolotlBucketMeta) builder.axolotlData(meta.toAxolotlData())
             if (meta is FireworkEffectMeta) builder.fireworkEffectData(meta.toFireworkEffectData())
             if (meta is MusicInstrumentMeta) builder.instrumentData(meta.toInstrumentData())
@@ -221,40 +283,46 @@ data class ItemFacade(
         fun texture(texture: String?) = apply { this.texture = texture }
         fun potionData(potionData: PotionData?) = apply { this.potionData = potionData }
         fun enchantData(enchantData: EnchantData?) = apply { this.enchantData = enchantData }
-        fun instrumentData(instrumentData: InstrumentData?) = apply { this.instrumentData = instrumentData }
+        fun instrumentData(instrumentData: InstrumentData?) = apply {
+            this.instrumentData = instrumentData
+        }
         fun axolotlData(axolotlData: AxolotlData?) = apply { this.axolotlData = axolotlData }
-        fun armorTrimData(armorTrimData: ArmorTrimData?) = apply { this.armorTrimData = armorTrimData }
+        fun armorTrimData(armorTrimData: ArmorTrimData?) = apply {
+            this.armorTrimData = armorTrimData
+        }
         fun ominousData(data: OminousData?) = apply { this.ominousData = data }
         fun bookData(data: BookData?) = apply { this.bookData = data }
-        fun fireworkEffectData(fireworkEffectData: FireworkEffectData?) =
-            apply { this.fireworkEffectData = fireworkEffectData }
+        fun fireworkEffectData(fireworkEffectData: FireworkEffectData?) = apply {
+            this.fireworkEffectData = fireworkEffectData
+        }
 
-        fun publicBukkitData(container: PersistentDataContainer) =
-            apply { this.pdcMapList = PersistentDataSerializer.toMapList(container) }
+        fun publicBukkitData(container: PersistentDataContainer) = apply {
+            this.pdcMapList = PersistentDataSerializer.toMapList(container)
+        }
 
-        fun build() = ItemFacade(
-            displayName = displayName,
-            material = material,
-            lore = lore,
-            model = model,
-            count = count,
-            hideEnchants = hideEnchants,
-            texture = texture,
-            potionData = potionData,
-            enchantData = enchantData,
-            rarity = rarity,
-            instrumentData = instrumentData,
-            axolotlData = axolotlData,
-            fireworkEffectData = fireworkEffectData,
-            armorTrimData = armorTrimData,
-            pdcMapList = pdcMapList,
-            ominousData = ominousData,
-            bookData = bookData,
-        )
+        fun build() =
+                ItemFacade(
+                        displayName = displayName,
+                        material = material,
+                        lore = lore,
+                        model = model,
+                        count = count,
+                        hideEnchants = hideEnchants,
+                        texture = texture,
+                        potionData = potionData,
+                        enchantData = enchantData,
+                        rarity = rarity,
+                        instrumentData = instrumentData,
+                        axolotlData = axolotlData,
+                        fireworkEffectData = fireworkEffectData,
+                        armorTrimData = armorTrimData,
+                        pdcMapList = pdcMapList,
+                        ominousData = ominousData,
+                        bookData = bookData,
+                )
     }
 }
 
 fun ItemStack.toFacade(): ItemFacade {
     return ItemFacade.of(this)
 }
-

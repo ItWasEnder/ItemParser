@@ -17,7 +17,7 @@ if (localProperties.exists()) {
 
 group = "tv.ender.itemparser"
 // Default version for local/dev builds. CI publishing should override via `-PreleaseVersion=...`
-version = (findProperty("releaseVersion") as String?) ?: "1.3.1-SNAPSHOT"
+version = (findProperty("releaseVersion") as String?) ?: "1.3.6-SNAPSHOT"
 
 val gsonVersion = "2.8.9"
 val mockkVersion = "1.13.12"

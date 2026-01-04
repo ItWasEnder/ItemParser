@@ -2,6 +2,11 @@ name: Publish (GitHub Packages)
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 1.3.1). If omitted, uses the tag name without leading 'v'."
+        required: false
+        type: string
   release:
     types: [published]
   push:
@@ -29,9 +34,29 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      - name: Determine version
+        id: ver
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${{ inputs.version || '' }}" ]]; then
+            v="${{ inputs.version }}"
+          elif [[ "${{ github.event_name }}" == "release" ]]; then
+            v="${{ github.event.release.tag_name }}"
+          else
+            v="${GITHUB_REF_NAME}"
+          fi
+          v="${v#v}"
+          if [[ -z "$v" ]]; then
+            echo "Version could not be determined." >&2
+            exit 1
+          fi
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
       - name: Publish to GitHub Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORG_GRADLE_PROJECT_releaseVersion: ${{ steps.ver.outputs.version }}
         run: ./gradlew publishMavenJavaPublicationToGitHubPackagesRepository --no-daemon
 
 

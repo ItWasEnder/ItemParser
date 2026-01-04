@@ -15,7 +15,8 @@ if (localProperties.exists()) {
 }
 
 group = "tv.ender.itemparser"
-version = "1.3.0"
+// Default version for local/dev builds. CI publishing should override via `-PreleaseVersion=...`
+version = (findProperty("releaseVersion") as String?) ?: "1.3.1-SNAPSHOT"
 
 val gsonVersion = "2.8.9"
 val mockkVersion = "1.13.12"
@@ -73,8 +74,14 @@ tasks {
     shadowJar {
         isEnableRelocation = true
         relocationPrefix = "${project.group}.libraries"
-        archiveClassifier.set("all")
+        // Publish/use the shaded jar as the primary artifact (no classifier).
+        archiveClassifier.set("")
         minimize()
+    }
+
+    // Keep the non-shaded jar available as a secondary artifact for debugging/reference.
+    jar {
+        archiveClassifier.set("original")
     }
 
     compileJava {
@@ -87,7 +94,7 @@ publishing {
     publications {
         create<MavenPublication>("mavenJava") {
             artifact(tasks.shadowJar.get()) {
-                classifier = null // Ensure the classifier is set to null
+                classifier = null // publish shaded jar with NO classifier
             }
 
             groupId = project.group.toString()

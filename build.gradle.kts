@@ -1,4 +1,5 @@
 import java.util.Properties
+import java.util.Locale
 
 plugins {
     kotlin("jvm") version "2.0.20-RC"
@@ -98,7 +99,8 @@ publishing {
             }
 
             groupId = project.group.toString()
-            artifactId = rootProject.name
+            // GitHub Packages (Maven) rejects uppercase artifact IDs and returns HTTP 422.
+            artifactId = rootProject.name.lowercase(Locale.ROOT)
             version = project.version.toString()
 
             pom {

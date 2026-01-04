@@ -43,3 +43,7 @@ bin/
 ### Mac OS ###
 .DS_Store
 /local.properties
+.envrc
+.env.local
+.env
+env.local

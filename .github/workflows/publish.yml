@@ -1,4 +1,4 @@
-name: Build (Upload Artifact)
+name: Publish (GitHub Packages)
 
 on:
   workflow_dispatch:
@@ -15,9 +15,10 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
 
     steps:
@@ -52,18 +53,10 @@ jobs:
           fi
           echo "version=$v" >> "$GITHUB_OUTPUT"
 
-      - name: Build shaded jar
+      - name: Publish to GitHub Packages
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ORG_GRADLE_PROJECT_releaseVersion: ${{ steps.ver.outputs.version }}
-        run: ./gradlew shadowJar --no-daemon
-
-      - name: Upload build artifact(s)
-        uses: actions/upload-artifact@v4
-        with:
-          name: ItemParser-${{ steps.ver.outputs.version }}
-          path: |
-            build/libs/*.jar
-          if-no-files-found: error
-          retention-days: 30
+        run: ./gradlew publishMavenJavaPublicationToGitHubPackagesRepository --no-daemon --stacktrace --info
 
 
